@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: examcoach-pwa
+    env: node
+    plan: free
+    region: ohio
+    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: examcoach-db
+          property: connectionString
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        value: https://examcoach-pwa.onrender.com
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: BLOB_READ_WRITE_TOKEN
+        sync: false
+      - key: PAYPAL_PLAN_INDIVIDUAL
+        sync: false
+      - key: PAYPAL_PLAN_FAMILY
+        sync: false
+      - key: PAYPAL_PLAN_SCHOOL
+        sync: false
+      - key: PAYPAL_PLAN_MINISTRY
+        sync: false
+      - key: PAYPAL_PLAN_NGO
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+
+databases:
+  - name: examcoach-db
+    plan: free

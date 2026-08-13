@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("user") // "user" | "admin"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  subscriptions Subscription[]
+  studyGoal     StudyGoal?
+  studySessions StudySession[]
+  documents     Document[]
+  flashcards    Flashcard[]
+  quizResults   QuizResult[]
+  mockExams     MockExam[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  userId           String
+  tier             String // free_trial, individual, family, school, ministry, ngo
+  paypalSubId      String?   @unique
+  status           String // active, cancelled, expired, past_due
+  trialStartDate   DateTime  @default(now())
+  trialEndDate     DateTime?
+  currentPeriodEnd DateTime?
+  seats            Int       @default(1)
+  maxSeats         Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subAccounts SubAccount[]
+}
+
+model SubAccount {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  name           String
+  email          String?  @unique
+  createdAt      DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+model StudyGoal {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  dailyMinutes Int      @default(20)
+  weeklyTopics Int      @default(5)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudySession {
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime @default(now())
+  durationMin   Int
+  topicsStudied String[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id        String    @id @default(cuid())
+  userId    String
+  filename  String
+  fileUrl   String
+  fileType  String
+  topics    String[]
+  parsedAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcards Flashcard[]
+}
+
+model Flashcard {
+  id           String    @id @default(cuid())
+  userId       String
+  documentId   String?
+  topic        String
+  question     String    @db.Text
+  answer       String    @db.Text
+  confidence   String?
+  lastReviewed DateTime?
+  createdAt    DateTime  @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id])
+}
+
+model QuizResult {
+  id             String   @id @default(cuid())
+  userId         String
+  topic          String
+  score          Float
+  totalQuestions Int
+  answers        Json
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MockExam {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  questions   Json
+  score       Float?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DailyUpload {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime @default(now())
+  count  Int      @default(0)
+
+  @@unique([userId, date])
+}
