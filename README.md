@@ -8,22 +8,35 @@ AI-powered study companion by **Axiom Neural Systems** (Silethemba).
 - **Auth** — email/password signup + Google OAuth
 - **7-day free trial** — auto-assigned on signup
 - **Subscription plans** — Individual, Family, School, Ministry, NGO
-- **Dashboard** — streaks, goals, weakness heatmap, quick actions
-- **Study tools** — AI flashcards, mock exams, Feynman coach
-- **Upload** — plan-based daily upload limits
+- **Multilingual** — English, isiNdebele (nd) and chiShona (sn) across UI *and* AI output
+- **Dark mode** — light / dark / system, persisted per user with no flash on load
+- **Per-plan dashboards** — a dedicated dashboard variant per tier (trial, individual, household, cohort, district, outreach)
+- **Streaks & goals** — current/longest streak, daily minute goal, weekly minute + topic goals
+- **14 study methods** — flashcards, active recall, spaced repetition, Pomodoro, Feynman, mock exams,
+  Cornell notes, blurting, mind maps, interleaving, past-paper drills, exam blueprints, peer teaching,
+  cohort analytics — gated by plan
+- **Upload page** — drag & drop with per-plan daily upload count and file-size limits
 - **Admin dashboard** — users, plans, system stats
 - **PWA** — installable, offline-capable
 
 ## Subscription Plans
 
-| Plan | Price | Seats | Daily Uploads |
-|------|-------|-------|---------------|
-| 7-Day Free Trial | Free | 1 | 2 |
-| Individual | $9.99/mo | 1 | Unlimited |
-| Family | $19.99/mo | 5 | Unlimited |
-| School | $99.99/mo | 100 | Unlimited |
-| Ministry | $299.99/mo | 500 | Unlimited |
-| NGO | $49.99/mo | 50 | Unlimited |
+| Plan | Price | Seats | Daily uploads | Max file size |
+|------|-------|-------|---------------|---------------|
+| 7-Day Free Trial | Free | 1 | 2 | 5 MB |
+| Individual | $9.99/mo | 1 | 20 | 15 MB |
+| Family | $19.99/mo | 5 | 40 | 20 MB |
+| NGO | $49.99/mo | 50 | 150 | 25 MB |
+| School | $99.99/mo | 100 | 200 | 30 MB |
+| Ministry | $299.99/mo | 500 | 1000 | 50 MB |
+
+Limits live in a single source of truth: `src/lib/plans.ts`.
+
+## Languages
+
+UI copy lives in `src/lib/i18n/dictionaries/{en,nd,sn}.ts`. The active locale is stored in the
+`examcoach_locale` cookie (and on the user row when signed in) and is passed to Gemini so
+flashcards, mock exams and Feynman feedback are generated in the learner's language.
 
 ## Quick Start (Local)
 
@@ -35,6 +48,14 @@ npm install
 npx prisma db push
 node scripts/generate-icons.js
 npm run dev
+```
+
+Checks:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
