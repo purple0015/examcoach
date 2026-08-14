@@ -1,12 +1,16 @@
 services:
   - type: web
     name: examcoach-pwa
-    env: node
+    runtime: node
     plan: free
     region: ohio
-    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run build
-    startCommand: npm start
+    rootDirectory: .
+    node:
+      version: 20.18.0
+    buildCommand: npm ci && npm run build
+    startCommand: npx prisma migrate deploy || npx prisma db push ; npm start
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,10 +18,14 @@ services:
         fromDatabase:
           name: examcoach-db
           property: connectionString
+      - key: DIRECT_URL
+        fromDatabase:
+          name: examcoach-db
+          property: connectionString
       - key: NEXTAUTH_SECRET
         generateValue: true
       - key: NEXTAUTH_URL
-        value: https://examcoach-pwa.onrender.com
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: PAYPAL_CLIENT_ID
@@ -46,3 +54,5 @@ services:
 databases:
   - name: examcoach-db
     plan: free
+    postgresMajorVersion: 16
+
