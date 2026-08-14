@@ -37,9 +37,20 @@ export default function SignupPage() {
         return;
       }
 
-      await signIn("credentials", { email, password, redirect: false });
-      router.push("/dashboard");
-      router.refresh();
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.error || !signInResult?.ok) {
+        setError(t.auth.signupFailed);
+        setLoading(false);
+        router.replace("/login");
+        return;
+      }
+
+      router.replace("/dashboard");
     } catch {
       setError(t.auth.signupFailed);
       setLoading(false);

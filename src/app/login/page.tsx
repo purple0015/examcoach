@@ -22,15 +22,19 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", { email, password, redirect: false });
-    setLoading(false);
+    try {
+      const result = await signIn("credentials", { email, password, redirect: false });
+      setLoading(false);
 
-    if (result?.error) {
+      if (result?.error || !result?.ok) {
+        setError(t.auth.invalidCredentials);
+        return;
+      }
+      router.replace(callbackUrl);
+    } catch {
+      setLoading(false);
       setError(t.auth.invalidCredentials);
-      return;
     }
-    router.push(callbackUrl);
-    router.refresh();
   }
 
   return (
