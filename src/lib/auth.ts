@@ -97,19 +97,32 @@ export const authOptions: NextAuthOptions = {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 7);
 
-        await prisma.subscription.create({
-          data: {
-            userId: user.id,
-            tier: "free_trial",
-            status: "active",
-            trialStartDate: new Date(),
-            trialEndDate,
-            maxSeats: 1,
-          },
+        // Check for existing subscription to avoid P2002 if created by signup route
+        const existingSub = await prisma.subscription.findFirst({
+          where: { userId: user.id },
         });
-        await prisma.studyGoal.create({
-          data: { userId: user.id, dailyMinutes: 20, weeklyTopics: 5 },
+        if (!existingSub) {
+          await prisma.subscription.create({
+            data: {
+              userId: user.id,
+              tier: "free_trial",
+              status: "active",
+              trialStartDate: new Date(),
+              trialEndDate,
+              maxSeats: 1,
+            },
+          });
+        }
+
+        // Check for existing study goal
+        const existingGoal = await prisma.studyGoal.findUnique({
+          where: { userId: user.id },
         });
+        if (!existingGoal) {
+          await prisma.studyGoal.create({
+            data: { userId: user.id, dailyMinutes: 20, weeklyTopics: 5 },
+          });
+        }
       } catch (error) {
         console.error("createUser event error:", error);
       }
