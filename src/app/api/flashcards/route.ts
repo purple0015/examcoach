@@ -23,10 +23,34 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id, confidence } = await req.json();
-  await prisma.flashcard.updateMany({
+  const { id, confidence } = (await req.json()) as { id: string; confidence: "low" | "medium" | "high" };
+  
+  const card = await prisma.flashcard.findUnique({
     where: { id, userId: session.user.id },
-    data: { confidence, lastReviewed: new Date() },
+  });
+
+  if (!card) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  let interval = card.reviewInterval;
+  if (confidence === "low") {
+    interval = 1;
+  } else if (confidence === "medium") {
+    interval = Math.max(3, interval * 1.5);
+  } else {
+    interval = Math.max(7, interval * 2);
+  }
+
+  const nextReview = new Date();
+  nextReview.setDate(nextReview.getDate() + Math.round(interval));
+
+  await prisma.flashcard.update({
+    where: { id },
+    data: { 
+      confidence, 
+      lastReviewed: new Date(),
+      nextReview,
+      reviewInterval: Math.round(interval),
+    },
   });
 
   return NextResponse.json({ success: true });

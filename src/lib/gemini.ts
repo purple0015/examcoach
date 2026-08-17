@@ -41,7 +41,7 @@ export async function parseDocument(
   content: string,
   locale: Locale = DEFAULT_LOCALE
 ): Promise<{ topics: string[]; summary: string }> {
-  const prompt = `You are a syllabus analyst for Zimbabwean secondary and tertiary exams.
+  const prompt = `You are a syllabus analyst for international secondary and tertiary exams.
 ${languageInstruction(locale)}
 Extract the study topics from the material below.
 

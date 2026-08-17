@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateFlashcards } from "@/lib/gemini";
+import { generateFlashcardsGroq, isGroqConfigured } from "@/lib/groq";
 import { prisma } from "@/lib/db";
 import { getTierLimits, getUserTier } from "@/lib/subscription";
 import { isMethodAllowed } from "@/lib/study-methods";
@@ -24,14 +25,25 @@ export async function POST(req: Request) {
   if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
   const resolvedTopic = topic || doc.topics[0] || "General";
+  const count = getTierLimits(tier).flashcardsPerBatch;
 
   try {
-    const cards = await generateFlashcards(
-      resolvedTopic,
-      doc.filename,
-      getTierLimits(tier).flashcardsPerBatch,
-      session.user.locale
-    );
+    let cards;
+    if (isGroqConfigured()) {
+      cards = await generateFlashcardsGroq(
+        resolvedTopic,
+        doc.filename,
+        count,
+        session.user.locale
+      );
+    } else {
+      cards = await generateFlashcards(
+        resolvedTopic,
+        doc.filename,
+        count,
+        session.user.locale
+      );
+    }
 
     const created = await prisma.$transaction(
       cards.map((c) =>

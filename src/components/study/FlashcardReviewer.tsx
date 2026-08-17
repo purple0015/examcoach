@@ -24,13 +24,14 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
     const [cardsRes, docsRes] = await Promise.all([fetch("/api/flashcards"), fetch("/api/documents")]);
     if (cardsRes.ok) {
       const all = (await cardsRes.json()) as FlashcardItem[];
-      // Spaced repetition surfaces the least confident cards first.
+      // Spaced repetition surfaces cards due for review first.
       setCards(
         spaced
-          ? [...all].sort(
-              (a, b) => CONFIDENCE.indexOf((a.confidence ?? "low") as (typeof CONFIDENCE)[number]) -
-                CONFIDENCE.indexOf((b.confidence ?? "low") as (typeof CONFIDENCE)[number])
-            )
+          ? [...all].sort((a, b) => {
+              if (!a.nextReview) return -1;
+              if (!b.nextReview) return 1;
+              return new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime();
+            })
           : all
       );
     }

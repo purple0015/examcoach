@@ -1,7 +1,7 @@
 export const en = {
   common: {
     appName: "ExamCoach",
-    tagline: "AI study companion for Zimbabwean learners",
+    tagline: "AI study companion for Africa and the globe",
     getStarted: "Get started",
     login: "Log in",
     signup: "Sign up",
@@ -48,7 +48,7 @@ export const en = {
   landing: {
     heroTitle: "Study smarter in your own language",
     heroSubtitle:
-      "Upload your notes, get AI flashcards, mock exams and coaching in English, isiNdebele or chiShona.",
+      "Upload your notes, get AI flashcards, mock exams and coaching in multiple global languages.",
     ctaPrimary: "Start 7-day free trial",
     ctaSecondary: "See plans",
     featuresTitle: "Everything you need to pass",
@@ -59,7 +59,7 @@ export const en = {
     feature3Title: "Streaks and goals",
     feature3Body: "Daily and weekly targets keep you accountable with a dashboard built for your plan.",
     feature4Title: "Truly multilingual",
-    feature4Body: "The whole app — and the AI itself — speaks English, isiNdebele and chiShona.",
+    feature4Body: "The whole app — and the AI itself — supports major international languages for a global reach.",
     trialNote: "No card required for the 7-day trial.",
   },
   auth: {
@@ -222,7 +222,7 @@ export const en = {
   },
   pricing: {
     title: "Plans",
-    subtitle: "Every plan includes English, isiNdebele and chiShona.",
+    subtitle: "Every plan includes lightning-fast AI in multiple international languages.",
     currentPlan: "Current plan",
     choosePlan: "Choose plan",
     uploadsPerDay: "uploads per day",

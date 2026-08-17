@@ -125,15 +125,17 @@ model Document {
 }
 
 model Flashcard {
-  id           String    @id @default(cuid())
-  userId       String
-  documentId   String?
-  topic        String
-  question     String    @db.Text
-  answer       String    @db.Text
-  confidence   String?
-  lastReviewed DateTime?
-  createdAt    DateTime  @default(now())
+  id             String    @id @default(cuid())
+  userId         String
+  documentId     String?
+  topic          String
+  question       String    @db.Text
+  answer         String    @db.Text
+  confidence     String?
+  lastReviewed   DateTime?
+  nextReview     DateTime?
+  reviewInterval Int       @default(0) // in days
+  createdAt      DateTime  @default(now())
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   document Document? @relation(fields: [documentId], references: [id])

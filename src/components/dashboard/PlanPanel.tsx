@@ -20,14 +20,14 @@ export function PlanPanel({
   const seatUsage = `${subscription.seats} ${t.common.of} ${subscription.maxSeats}`;
 
   const variants = {
-    trial: {
+    starter: {
       icon: Sparkles,
       title: t.dashboard.trialTitle,
       body: t.dashboard.trialBody,
       tiles: [
-        { label: t.dashboard.trialEnds, value: `${subscription.trialDaysLeft} ${t.common.days}` },
         { label: t.pricing.studyMethods, value: plan.studyMethods.length },
         { label: t.pricing.uploadsPerDay, value: plan.limits.dailyUploads },
+        { label: "Groq Speed", value: "Basic" },
       ],
     },
     individual: {

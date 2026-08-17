@@ -37,5 +37,5 @@ export function isMethodAllowed(tier: SubscriptionTier, id: StudyMethodId): bool
 
 export function lowestTierWithMethod(id: StudyMethodId): SubscriptionTier {
   const plan = PLANS.find((p) => p.studyMethods.includes(id));
-  return plan?.id ?? "individual";
+  return plan?.id ?? "pro_scholar";
 }

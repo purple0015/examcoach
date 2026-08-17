@@ -91,10 +91,13 @@ export default function PricingPage() {
                 <Feature
                   text={`${plan.limits.mockExamQuestions} ${t.pricing.questionsPerExam}`}
                 />
+                {plan.limits.groqTokenLimit > 0 && (
+                  <Feature text={`${(plan.limits.groqTokenLimit / 1000).toLocaleString()}k Groq Tokens`} />
+                )}
                 <Feature text={`${plan.maxSeats} ${t.common.seats}`} />
               </ul>
 
-              {plan.id !== "free_trial" && (
+              {plan.id !== "starter_free" && (
                 <button
                   type="button"
                   disabled={current || pending === plan.id}

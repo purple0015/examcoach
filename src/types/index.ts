@@ -1,12 +1,12 @@
 export type SubscriptionTier =
-  | "free_trial"
-  | "individual"
-  | "family"
+  | "starter_free"
+  | "pro_scholar"
+  | "global_elite"
   | "school"
   | "ministry"
   | "ngo";
 
-export type Locale = "en" | "nd" | "sn";
+export type Locale = "en" | "nd" | "sn" | "fr" | "es" | "pt" | "ar" | "zh" | "sw";
 
 export type ThemePreference = "light" | "dark" | "system";
 
@@ -16,6 +16,8 @@ export interface TierLimits {
   mockExamQuestions: number;
   flashcardsPerBatch: number;
   aiRequestsPerDay: number;
+  groqTokenLimit: number;
+  hasPriorityInference: boolean;
 }
 
 export interface Plan {
@@ -31,7 +33,7 @@ export interface Plan {
 }
 
 export type DashboardVariant =
-  | "trial"
+  | "starter"
   | "individual"
   | "family"
   | "school"
@@ -143,6 +145,7 @@ export interface FlashcardItem {
   answer: string;
   confidence: string | null;
   lastReviewed: string | null;
+  nextReview: string | null;
 }
 
 export interface MockExamQuestion {

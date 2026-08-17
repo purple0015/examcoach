@@ -18,32 +18,32 @@ export async function getActiveSubscription(userId: string) {
 
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
   const subscription = await getActiveSubscription(userId);
-  if (!subscription) return "free_trial";
+  if (!subscription) return "starter_free";
 
   if (
-    subscription.tier === "free_trial" &&
+    subscription.tier === "starter_free" &&
     subscription.trialEndDate &&
     subscription.trialEndDate < new Date()
   ) {
-    return "free_trial";
+    return "starter_free";
   }
   return subscription.tier as SubscriptionTier;
 }
 
 export async function getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
   const subscription = await getActiveSubscription(userId);
-  const tier = (subscription?.tier ?? "free_trial") as SubscriptionTier;
+  const tier = (subscription?.tier ?? "starter_free") as SubscriptionTier;
   const plan = getPlanByTier(tier);
 
   const trialDaysLeft =
-    subscription?.trialEndDate && tier === "free_trial"
+    subscription?.trialEndDate && tier === "starter_free"
       ? Math.max(0, daysBetween(new Date(), subscription.trialEndDate))
       : 0;
 
   return {
     tier,
     status: subscription?.status ?? "expired",
-    isTrial: tier === "free_trial",
+    isTrial: tier === "starter_free",
     trialDaysLeft,
     currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() ?? null,
     seats: subscription?.seats ?? 1,

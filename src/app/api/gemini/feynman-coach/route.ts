@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { feynmanCoach } from "@/lib/gemini";
+import { feynmanCoachGroq, isGroqConfigured } from "@/lib/groq";
 import { getUserTier } from "@/lib/subscription";
 import { isMethodAllowed } from "@/lib/study-methods";
 
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
   const tier = await getUserTier(session.user.id);
   if (!isMethodAllowed(tier, "feynman")) {
     return NextResponse.json(
-      { error: "The Feynman coach is available from the Individual plan" },
+      { error: "The Feynman coach is available from the Pro Scholar plan" },
       { status: 403 }
     );
   }
@@ -25,6 +26,9 @@ export async function POST(req: Request) {
   }
 
   try {
+    if (isGroqConfigured()) {
+      return NextResponse.json(await feynmanCoachGroq(topic, explanation, session.user.locale));
+    }
     return NextResponse.json(await feynmanCoach(topic, explanation, session.user.locale));
   } catch (error) {
     console.error("Feynman coach error:", error);
