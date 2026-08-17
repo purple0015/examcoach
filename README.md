@@ -23,14 +23,16 @@ AI-powered study companion by **Axiom Neural Systems** (Silethemba).
 
 | Plan | Price | Seats | Daily uploads | Max file size |
 |------|-------|-------|---------------|---------------|
-| 7-Day Free Trial | Free | 1 | 2 | 5 MB |
-| Individual | $4.99/mo | 1 | 20 | 15 MB |
-| Family | $19.99/mo | 5 | 40 | 20 MB |
-| NGO | $378.99/mo | 50 | 150 | 25 MB |
-| School | $199.99/mo | 100 | 200 | 30 MB |
-| Ministry | $599.99/mo | 500 | 1000 | 50 MB |
+| 7-Day Free Trial | Free | 1 | 50 | 25 MB |
+| Starter (Free) | Free | 1 | 5 | 10 MB |
+| Pro Scholar | $9.99/mo | 1 | 50 | 25 MB |
+| Global Elite | $24.99/mo | 2 | 500 | 100 MB |
+| School | $199.99/mo | 100 | 1000 | 100 MB |
+| Ministry | $999.99/mo | 1000 | 5000 | 200 MB |
+| NGO | $378.99/mo | 50 | 500 | 50 MB |
 
 Limits live in a single source of truth: `src/lib/plans.ts`.
+
 
 ## Languages
 
