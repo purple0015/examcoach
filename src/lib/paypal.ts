@@ -5,16 +5,16 @@ const PAYPAL_API =
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
 
-const PLAN_ENV_KEYS: Record<Exclude<SubscriptionTier, "free_trial">, string> = {
-  individual: "PAYPAL_PLAN_INDIVIDUAL",
-  family: "PAYPAL_PLAN_FAMILY",
+const PLAN_ENV_KEYS: Record<Exclude<SubscriptionTier, "free_trial" | "starter_free">, string> = {
+  pro_scholar: "PAYPAL_PLAN_PRO_SCHOLAR",
+  global_elite: "PAYPAL_PLAN_GLOBAL_ELITE",
   school: "PAYPAL_PLAN_SCHOOL",
   ministry: "PAYPAL_PLAN_MINISTRY",
   ngo: "PAYPAL_PLAN_NGO",
 };
 
 export function getPayPalPlanId(tier: SubscriptionTier): string | undefined {
-  if (tier === "free_trial") return undefined;
+  if (tier === "free_trial" || tier === "starter_free") return undefined;
   return process.env[PLAN_ENV_KEYS[tier]];
 }
 

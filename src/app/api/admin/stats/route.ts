@@ -42,7 +42,7 @@ export async function GET() {
     totalDocuments,
     totalFlashcards,
     totalMockExams,
-    recentSignups: recentUsers.map((u) => ({
+    recentSignups: recentUsers.map((u: { id: string; name: string | null; email: string; createdAt: Date }) => ({
       ...u,
       createdAt: u.createdAt.toISOString(),
     })),

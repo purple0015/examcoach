@@ -1,4 +1,5 @@
 export type SubscriptionTier =
+  | "free_trial"
   | "starter_free"
   | "pro_scholar"
   | "global_elite"

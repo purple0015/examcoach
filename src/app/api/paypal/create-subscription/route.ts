@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   }
 
   const { tier } = (await req.json()) as { tier?: string };
-  const isKnownTier = PLANS.some((p) => p.id === tier && p.id !== "free_trial");
+  const isKnownTier = PLANS.some((p) => p.id === tier);
   if (!isKnownTier) {
     return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
   }

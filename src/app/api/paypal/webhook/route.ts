@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) return NextResponse.json({ received: true });
 
-      const tier = tierForPayPalPlanId(body.resource?.plan_id) ?? "individual";
+      const tier = tierForPayPalPlanId(body.resource?.plan_id) ?? "pro_scholar";
       const plan = getPlanByTier(tier);
 
       await prisma.$transaction([
