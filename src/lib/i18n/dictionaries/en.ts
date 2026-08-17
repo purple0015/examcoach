@@ -61,6 +61,8 @@ export const en = {
     feature4Title: "Truly multilingual",
     feature4Body: "The whole app — and the AI itself — supports major international languages for a global reach.",
     trialNote: "No card required for the 7-day trial.",
+    readyToStart: "Ready to start?",
+    joinThousands: "Join thousands of learners worldwide and reach your potential.",
   },
   auth: {
     loginTitle: "Welcome back",

@@ -63,6 +63,8 @@ export const fr: Dictionary = {
     feature4Title: "Véritablement multilingue",
     feature4Body: "L'application entière — et l'IA elle-même — prend en charge les principales langues internationales pour une portée mondiale.",
     trialNote: "Aucune carte requise pour l'essai de 7 jours.",
+    readyToStart: "Prêt à commencer ?",
+    joinThousands: "Rejoignez des milliers d'apprenants dans le monde entier et réalisez votre potentiel.",
   },
   auth: {
     loginTitle: "Bon retour",

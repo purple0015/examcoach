@@ -34,6 +34,7 @@ export interface Plan {
 }
 
 export type DashboardVariant =
+  | "trial"
   | "starter"
   | "individual"
   | "family"

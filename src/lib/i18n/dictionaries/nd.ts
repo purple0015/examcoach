@@ -66,6 +66,8 @@ export const nd: Dictionary = {
     feature4Title: "Izindimi ngempela",
     feature4Body: "Uhlelo lonke — le-AI ngokwayo — lukhuluma isiNgisi, isiNdebele lechiShona.",
     trialNote: "Awudingi ikhadi lebhanga ukuze uzame insuku eziyisikhombisa.",
+    readyToStart: "Usulungele ukuqalisa?",
+    joinThousands: "Hlanganyela lezinkulungwane zabafundi emhlabeni wonke ufinyelele amandla akho.",
   },
   auth: {
     loginTitle: "Siyakwamukela futhi",

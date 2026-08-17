@@ -66,6 +66,8 @@ export const sn: Dictionary = {
     feature4Title: "Mitauro chaiyo",
     feature4Body: "Purogiramu yese — ne-AI pachayo — inotaura Chirungu, chiNdebele nechiShona.",
     trialNote: "Hapana kadhi rebhanga rinodiwa pamazuva manomwe ekuedza.",
+    readyToStart: "Wagadzirira kutanga?",
+    joinThousands: "Sangana nezviuru zvevadzidzi pasi rose uye uzadzise kugona kwako.",
   },
   auth: {
     loginTitle: "Wagamuchirwa zvakare",

@@ -4,8 +4,6 @@ import Link from "next/link";
 import { BookOpenCheck, Flame, Languages, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { PLANS } from "@/lib/plans";
-import { formatCurrency } from "@/lib/utils";
 
 export default function LandingPage() {
   const { t } = useI18n();
@@ -49,31 +47,15 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mt-12">
-        <h2 className="section-title text-center">{t.pricing.title}</h2>
-        <p className="mt-1 text-center text-sm text-slate-500 dark:text-slate-400">
-          {t.pricing.subtitle}
+      <section className="mt-12 text-center">
+        <h2 className="section-title">{t.landing.readyToStart}</h2>
+        <p className="mt-2 text-slate-500 dark:text-slate-400">
+          {t.landing.joinThousands}
         </p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLANS.map((plan) => (
-            <article key={plan.id} className="card flex flex-col">
-              <h3 className="font-semibold">{plan.name}</h3>
-              <p className="mt-1 text-2xl font-bold">
-                {plan.price === 0 ? t.common.free : formatCurrency(plan.price)}
-                {plan.price > 0 && (
-                  <span className="text-sm font-normal text-slate-500">{t.common.perMonth}</span>
-                )}
-              </p>
-              <ul className="mt-3 flex-1 space-y-1 text-sm text-slate-500 dark:text-slate-400">
-                {plan.highlights.map((highlight) => (
-                  <li key={highlight}>• {highlight}</li>
-                ))}
-              </ul>
-              <Link href="/pricing" className="btn-secondary mt-4 justify-center">
-                {t.pricing.choosePlan}
-              </Link>
-            </article>
-          ))}
+        <div className="mt-6">
+          <Link href="/signup" className="btn-primary inline-flex">
+            {t.landing.ctaPrimary}
+          </Link>
         </div>
       </section>
     </AppShell>

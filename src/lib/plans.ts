@@ -2,6 +2,34 @@ import { Plan, SubscriptionTier, TierLimits } from "@/types";
 
 export const PLANS: Plan[] = [
   {
+    id: "free_trial",
+    name: "7-Day Free Trial",
+    price: 0,
+    interval: "trial",
+    maxSeats: 1,
+    limits: {
+      dailyUploads: 50,
+      maxFileSizeMb: 25,
+      mockExamQuestions: 50,
+      flashcardsPerBatch: 25,
+      aiRequestsPerDay: 200,
+      groqTokenLimit: 250000,
+      hasPriorityInference: true,
+    },
+    studyMethods: [
+      "flashcards",
+      "active_recall",
+      "pomodoro",
+      "feynman",
+      "spaced_repetition",
+      "mock_exam",
+      "cornell_notes",
+      "blurting",
+    ],
+    dashboard: "trial",
+    highlights: ["All Pro Features", "Advanced Groq LPU Speed", "Full Study Method Suite"],
+  },
+  {
     id: "starter_free",
     name: "Starter (Free)",
     price: 0,
@@ -194,5 +222,5 @@ export function getTierLimits(tier: SubscriptionTier): TierLimits {
 }
 
 export function isPaidTier(tier: SubscriptionTier): boolean {
-  return tier !== "starter_free";
+  return tier !== "starter_free" && tier !== "free_trial";
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, GraduationCap, HeartHandshake, Sparkles, Target, Users } from "lucide-react";
+import { Building2, GraduationCap, HeartHandshake, Sparkles, Target, Users, Zap } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { StatCard } from "@/components/ui/StatCard";
 import { DashboardStats, SubscriptionStatus } from "@/types";
@@ -20,14 +20,24 @@ export function PlanPanel({
   const seatUsage = `${subscription.seats} ${t.common.of} ${subscription.maxSeats}`;
 
   const variants = {
-    starter: {
-      icon: Sparkles,
+    trial: {
+      icon: Zap,
       title: t.dashboard.trialTitle,
       body: t.dashboard.trialBody,
       tiles: [
         { label: t.pricing.studyMethods, value: plan.studyMethods.length },
         { label: t.pricing.uploadsPerDay, value: plan.limits.dailyUploads },
-        { label: "Groq Speed", value: "Basic" },
+        { label: "AI Speed", value: "Turbo" },
+      ],
+    },
+    starter: {
+      icon: Sparkles,
+      title: `${plan.name} ${t.dashboard.planDashboard}`,
+      body: t.study.subtitle,
+      tiles: [
+        { label: t.pricing.studyMethods, value: plan.studyMethods.length },
+        { label: t.pricing.uploadsPerDay, value: plan.limits.dailyUploads },
+        { label: "AI Speed", value: "Basic" },
       ],
     },
     individual: {
