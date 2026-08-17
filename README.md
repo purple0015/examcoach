@@ -8,7 +8,7 @@ AI-powered study companion by **Axiom Neural Systems** (Silethemba).
 - **Auth** — email/password signup + Google OAuth
 - **7-day free trial** — auto-assigned on signup
 - **Subscription plans** — Individual, Family, School, Ministry, NGO
-- **Multilingual** — English, isiNdebele (nd) and chiShona (sn) across UI *and* AI output
+- **Multilingual** — English, Ndebele (nd), Shona (sn), French (fr), Spanish (es), Portuguese (pt), Arabic (ar), Mandarin Chinese (zh), and Swahili (sw) across UI *and* AI output
 - **Dark mode** — light / dark / system, persisted per user with no flash on load
 - **Per-plan dashboards** — a dedicated dashboard variant per tier (trial, individual, household, cohort, district, outreach)
 - **Streaks & goals** — current/longest streak, daily minute goal, weekly minute + topic goals
@@ -34,9 +34,10 @@ Limits live in a single source of truth: `src/lib/plans.ts`.
 
 ## Languages
 
-UI copy lives in `src/lib/i18n/dictionaries/{en,nd,sn}.ts`. The active locale is stored in the
+UI copy lives in `src/lib/i18n/dictionaries/*.ts`. The active locale is stored in the
 `examcoach_locale` cookie (and on the user row when signed in) and is passed to Gemini so
 flashcards, mock exams and Feynman feedback are generated in the learner's language.
+Supported languages: English, Ndebele, Shona, French, Spanish, Portuguese, Arabic, Mandarin, Swahili.
 
 ## Quick Start (Local)
 
