@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { cn } from "@/lib/utils";
 import { DocumentSummary, MockExamQuestion } from "@/types";
 
@@ -12,8 +13,14 @@ interface GeneratedExam {
   questions: MockExamQuestion[];
 }
 
+const TOPICS_CACHE_KEY = "examcoach:cache:exam-topics";
+const EXAM_CACHE_KEY = "examcoach:cache:current-exam";
+const ANSWERS_CACHE_KEY = "examcoach:cache:current-answers";
+const RESULTS_SYNC_QUEUE = "examcoach:sync:results";
+
 export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: boolean }) {
   const { t } = useI18n();
+  const isOnline = useOnlineStatus();
   const [topics, setTopics] = useState<string[]>([]);
   const [topicInput, setTopicInput] = useState("");
   const [exam, setExam] = useState<GeneratedExam | null>(null);
@@ -23,14 +30,59 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Load cached topics first
+    const cached = localStorage.getItem(TOPICS_CACHE_KEY);
+    if (cached) setTopics(JSON.parse(cached));
+
+    // Load active exam if exists
+    const cachedExam = localStorage.getItem(EXAM_CACHE_KEY);
+    const cachedAnswers = localStorage.getItem(ANSWERS_CACHE_KEY);
+    if (cachedExam && cachedAnswers) {
+      setExam(JSON.parse(cachedExam));
+      setAnswers(JSON.parse(cachedAnswers));
+    }
+
     void fetch("/api/documents")
       .then((res) => (res.ok ? res.json() : []))
-      .then((docs: DocumentSummary[]) =>
-        setTopics(Array.from(new Set(docs.flatMap((d) => d.topics))).slice(0, 12))
-      );
+      .then((docs: DocumentSummary[]) => {
+        const tps = Array.from(new Set(docs.flatMap((d) => d.topics))).slice(0, 12);
+        setTopics(tps);
+        localStorage.setItem(TOPICS_CACHE_KEY, JSON.stringify(tps));
+      })
+      .catch(() => {});
   }, []);
 
+  // Save progress locally
+  useEffect(() => {
+    if (exam && !submitted) {
+      localStorage.setItem(EXAM_CACHE_KEY, JSON.stringify(exam));
+      localStorage.setItem(ANSWERS_CACHE_KEY, JSON.stringify(answers));
+    }
+  }, [exam, answers, submitted]);
+
+  // Sync results when back online
+  useEffect(() => {
+    if (isOnline) {
+      const queue = JSON.parse(localStorage.getItem(RESULTS_SYNC_QUEUE) ?? "[]");
+      if (queue.length > 0) {
+        void Promise.all(
+          queue.map((item: any) =>
+            fetch("/api/quiz-results", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(item),
+            })
+          )
+        ).then(() => localStorage.setItem(RESULTS_SYNC_QUEUE, "[]"));
+      }
+    }
+  }, [isOnline]);
+
   async function generate() {
+    if (!isOnline) {
+      setError("AI exam generation requires an internet connection.");
+      return;
+    }
     setLoading(true);
     setError("");
     setSubmitted(false);
@@ -65,18 +117,28 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
     const correct = exam.questions.filter((q, i) => answers[i] === q.correctIndex).length;
     const score = Math.round((correct / exam.questions.length) * 100);
     setSubmitted(true);
+    localStorage.removeItem(EXAM_CACHE_KEY);
+    localStorage.removeItem(ANSWERS_CACHE_KEY);
 
-    await fetch("/api/quiz-results", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        topic: exam.questions[0]?.topic ?? "General",
-        score,
-        totalQuestions: exam.questions.length,
-        answers,
-        mockExamId: exam.id,
-      }),
-    });
+    const payload = {
+      topic: exam.questions[0]?.topic ?? "General",
+      score,
+      totalQuestions: exam.questions.length,
+      answers,
+      mockExamId: exam.id,
+    };
+
+    if (isOnline) {
+      await fetch("/api/quiz-results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      const queue = JSON.parse(localStorage.getItem(RESULTS_SYNC_QUEUE) ?? "[]");
+      queue.push(payload);
+      localStorage.setItem(RESULTS_SYNC_QUEUE, JSON.stringify(queue));
+    }
   }
 
   const correctCount = exam
