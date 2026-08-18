@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
 
     // 2. Create Plans for each paid tier
     const results: Record<string, string> = {};
-    const paidTiers = PLANS.filter(p => p.price > 0 && p.id !== "free_trial");
+    // Explicitly filter out tiers with 0 price (Trial and Starter)
+    const paidTiers = PLANS.filter(p => p.price > 0 && p.id !== "free_trial" && p.id !== "starter_free");
 
     for (const plan of paidTiers) {
       console.log(`Creating plan for tier: ${plan.name} ($${plan.price})...`);
