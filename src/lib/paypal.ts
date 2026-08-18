@@ -39,7 +39,11 @@ async function getAccessToken(): Promise<string> {
     cache: "no-store",
   });
 
-  if (!res.ok) throw new Error(`PayPal auth failed (${res.status})`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    const env = process.env.PAYPAL_ENV === "live" ? "LIVE" : "SANDBOX";
+    throw new Error(`PayPal auth failed (Status: ${res.status}, Env: ${env}). Please check your Client ID and Secret. Details: ${errorText}`);
+  }
   const data = (await res.json()) as { access_token: string };
   return data.access_token;
 }
