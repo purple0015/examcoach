@@ -17,6 +17,16 @@ export async function getActiveSubscription(userId: string) {
 }
 
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+
+  // Admin bypass: purpleteddy002@gmail.com gets unlimited access and is not billed
+  if (user?.email?.toLowerCase() === "purpleteddy002@gmail.com") {
+    return "global_elite";
+  }
+
   const subscription = await getActiveSubscription(userId);
   if (!subscription) return "starter_free";
 
@@ -31,6 +41,28 @@ export async function getUserTier(userId: string): Promise<SubscriptionTier> {
 }
 
 export async function getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+
+  // Admin bypass
+  if (user?.email?.toLowerCase() === "purpleteddy002@gmail.com") {
+    const plan = getPlanByTier("global_elite");
+    return {
+      tier: "global_elite",
+      status: "active",
+      isTrial: false,
+      trialDaysLeft: 0,
+      currentPeriodEnd: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+      seats: 1,
+      maxSeats: plan.maxSeats,
+      limits: plan.limits,
+      studyMethods: plan.studyMethods,
+      dashboard: plan.dashboard,
+    };
+  }
+
   const subscription = await getActiveSubscription(userId);
   const tier = (subscription?.tier ?? "starter_free") as SubscriptionTier;
   const plan = getPlanByTier(tier);
