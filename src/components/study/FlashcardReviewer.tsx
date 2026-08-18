@@ -5,12 +5,17 @@ import Link from "next/link";
 import { RotateCcw } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { DocumentSummary, FlashcardItem } from "@/types";
 
 const CONFIDENCE = ["low", "medium", "high"] as const;
+const CARDS_CACHE_KEY = "examcoach:cache:cards";
+const DOCS_CACHE_KEY = "examcoach:cache:docs";
+const SYNC_QUEUE_KEY = "examcoach:sync:ratings";
 
 export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   const { t } = useI18n();
+  const isOnline = useOnlineStatus();
   const [cards, setCards] = useState<FlashcardItem[]>([]);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [index, setIndex] = useState(0);
@@ -21,22 +26,39 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
 
   async function loadCards() {
     setLoading(true);
-    const [cardsRes, docsRes] = await Promise.all([fetch("/api/flashcards"), fetch("/api/documents")]);
-    if (cardsRes.ok) {
-      const all = (await cardsRes.json()) as FlashcardItem[];
-      // Spaced repetition surfaces cards due for review first.
-      setCards(
-        spaced
-          ? [...all].sort((a, b) => {
-              if (!a.nextReview) return -1;
-              if (!b.nextReview) return 1;
-              return new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime();
-            })
-          : all
-      );
+    try {
+      const [cardsRes, docsRes] = await Promise.all([fetch("/api/flashcards"), fetch("/api/documents")]);
+      
+      if (cardsRes.ok) {
+        const all = (await cardsRes.json()) as FlashcardItem[];
+        localStorage.setItem(CARDS_CACHE_KEY, JSON.stringify(all));
+        setCards(sortCards(all));
+      }
+      
+      if (docsRes.ok) {
+        const docs = (await docsRes.json()) as DocumentSummary[];
+        localStorage.setItem(DOCS_CACHE_KEY, JSON.stringify(docs));
+        setDocuments(docs);
+      }
+    } catch (err) {
+      // Offline fallback
+      const cachedCards = localStorage.getItem(CARDS_CACHE_KEY);
+      const cachedDocs = localStorage.getItem(DOCS_CACHE_KEY);
+      if (cachedCards) setCards(sortCards(JSON.parse(cachedCards)));
+      if (cachedDocs) setDocuments(JSON.parse(cachedDocs));
+    } finally {
+      setLoading(false);
     }
-    if (docsRes.ok) setDocuments((await docsRes.json()) as DocumentSummary[]);
-    setLoading(false);
+  }
+
+  function sortCards(all: FlashcardItem[]) {
+    return spaced
+      ? [...all].sort((a, b) => {
+          if (!a.nextReview) return -1;
+          if (!b.nextReview) return 1;
+          return new Date(a.nextReview).getTime() - new Date(b.nextReview).getTime();
+        })
+      : all;
   }
 
   useEffect(() => {
@@ -44,7 +66,29 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaced]);
 
+  // Sync queued ratings when online
+  useEffect(() => {
+    if (isOnline) {
+      const queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) ?? "[]");
+      if (queue.length > 0) {
+        void Promise.all(
+          queue.map((item: any) =>
+            fetch("/api/flashcards", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(item),
+            })
+          )
+        ).then(() => localStorage.setItem(SYNC_QUEUE_KEY, "[]"));
+      }
+    }
+  }, [isOnline]);
+
   async function generate(documentId: string) {
+    if (!isOnline) {
+      setError("AI generation requires an internet connection.");
+      return;
+    }
     setGenerating(true);
     setError("");
     try {
@@ -68,11 +112,21 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   async function rate(confidence: (typeof CONFIDENCE)[number]) {
     const card = cards[index];
     if (!card) return;
-    await fetch("/api/flashcards", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: card.id, confidence }),
-    });
+
+    const payload = { id: card.id, confidence };
+
+    if (isOnline) {
+      await fetch("/api/flashcards", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      const queue = JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) ?? "[]");
+      queue.push(payload);
+      localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+    }
+
     setRevealed(false);
     setIndex((i) => (i + 1) % cards.length);
   }
