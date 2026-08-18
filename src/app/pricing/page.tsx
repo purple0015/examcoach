@@ -17,13 +17,38 @@ export default function PricingPage() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [pending, setPending] = useState<SubscriptionTier | null>(null);
   const [error, setError] = useState("");
+  const [region, setRegion] = useState<"international" | "zimbabwe">("international");
+  const [pendingPayment, setPendingPayment] = useState<any>(null);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated") return;
     void fetch("/api/subscription")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setSubscription(data as SubscriptionStatus | null));
+
+    void fetch("/api/payments/pending")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setPendingPayment(data));
   }, [status]);
+
+  async function checkPaymentStatus() {
+    if (!pendingPayment) return;
+    setCheckingStatus(true);
+    try {
+      const res = await fetch(`/api/paynow/check-status?reference=${pendingPayment.reference}`);
+      const data = await res.json();
+      if (data.status === "completed") {
+        window.location.reload();
+      } else {
+        alert("Payment is still pending. If you just paid via EcoCash/InnBucks, please wait a few seconds and try again.");
+      }
+    } catch {
+      alert("Failed to check status. Please contact support if you have already paid.");
+    } finally {
+      setCheckingStatus(false);
+    }
+  }
 
   async function subscribe(tier: SubscriptionTier) {
     if (status !== "authenticated") {
@@ -39,17 +64,20 @@ export default function PricingPage() {
     setPending(tier);
     setError("");
     try {
-      const res = await fetch("/api/paypal/create-subscription", {
+      const endpoint = region === "zimbabwe" ? "/api/paynow/create-payment" : "/api/paypal/create-subscription";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tier }),
       });
-      const data = (await res.json()) as { approvalUrl?: string; error?: string };
-      if (!res.ok || !data.approvalUrl) {
+      const data = (await res.json()) as { approvalUrl?: string; checkoutUrl?: string; error?: string };
+      const url = data.checkoutUrl || data.approvalUrl;
+      
+      if (!res.ok || !url) {
         setError(data.error ?? t.common.error);
         return;
       }
-      window.location.href = data.approvalUrl;
+      window.location.href = url;
     } catch {
       setError(t.common.error);
     } finally {
@@ -59,12 +87,53 @@ export default function PricingPage() {
 
   return (
     <AppShell>
-      <header className="mb-12 text-center">
+      <header className="mb-8 text-center">
         <h1 className="text-3xl font-bold sm:text-4xl">{t.pricing.title}</h1>
         <p className="mt-4 mx-auto max-w-2xl text-slate-500 dark:text-slate-400">
           {t.pricing.subtitle}
         </p>
+
+        {/* Region Selector */}
+        <div className="mt-8 flex justify-center">
+          <div className="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+            <button
+              onClick={() => setRegion("international")}
+              className={`rounded-lg px-6 py-2 text-sm font-medium transition-all ${
+                region === "international"
+                  ? "bg-white text-primary-600 shadow-sm dark:bg-slate-700 dark:text-primary-400"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              International (PayPal/Cards)
+            </button>
+            <button
+              onClick={() => setRegion("zimbabwe")}
+              className={`rounded-lg px-6 py-2 text-sm font-medium transition-all ${
+                region === "zimbabwe"
+                  ? "bg-white text-primary-600 shadow-sm dark:bg-slate-700 dark:text-primary-400"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              Zimbabwe (EcoCash/InnBucks)
+            </button>
+          </div>
+        </div>
       </header>
+
+      {pendingPayment && (
+        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-900/30 dark:bg-amber-900/10">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+            You have a pending {pendingPayment.gateway === 'paynow' ? 'local' : ''} payment for the <strong>{PLANS.find(p => p.id === pendingPayment.tier)?.name}</strong> plan.
+          </p>
+          <button 
+            onClick={() => void checkPaymentStatus()}
+            disabled={checkingStatus}
+            className="mt-2 text-xs font-bold uppercase tracking-wider text-amber-600 hover:underline dark:text-amber-400"
+          >
+            {checkingStatus ? "Checking..." : "Click here to confirm payment & activate"}
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="mb-8 rounded-lg bg-red-50 p-4 text-center text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
