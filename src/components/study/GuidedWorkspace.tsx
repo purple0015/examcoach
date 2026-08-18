@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { StudyMethodId } from "@/types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { Brain, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface Feedback {
@@ -15,6 +16,7 @@ interface Feedback {
 
 export function GuidedWorkspace({ method }: { method: StudyMethodId }) {
   const { t } = useI18n();
+  const isOnline = useOnlineStatus();
   const storageKey = `examcoach:notes:${method}`;
   const topicKey = `examcoach:topic:${method}`;
   
@@ -39,6 +41,10 @@ export function GuidedWorkspace({ method }: { method: StudyMethodId }) {
 
   async function getAiFeedback() {
     if (!notes.trim()) return;
+    if (!isOnline) {
+      setError("AI coaching requires an internet connection.");
+      return;
+    }
     setLoading(true);
     setError("");
     setResult(null);
@@ -71,7 +77,7 @@ export function GuidedWorkspace({ method }: { method: StudyMethodId }) {
           </h2>
           <button
             onClick={() => void getAiFeedback()}
-            disabled={loading || !notes.trim()}
+            disabled={loading || !notes.trim() || !isOnline}
             className="btn-primary py-2 text-xs"
           >
             {loading ? t.common.loading : "Get AI Feedback"}
