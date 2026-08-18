@@ -89,6 +89,7 @@ export async function createPayPalPlan(productId: string, tierName: string, amou
           sequence: 1,
           total_cycles: 0,
           pricing_scheme: {
+            pricing_model: "FIXED",
             fixed_price: {
               value: amount.toFixed(2),
               currency_code: "USD",
