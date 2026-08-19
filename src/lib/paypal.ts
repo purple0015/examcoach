@@ -1,9 +1,9 @@
 import { SubscriptionTier } from "@/types";
 
 const PAYPAL_API =
-  process.env.PAYPAL_ENV === "live"
-    ? "https://api-m.paypal.com"
-    : "https://api-m.sandbox.paypal.com";
+  process.env.PAYPAL_ENV === "sandbox"
+    ? "https://api-m.sandbox.paypal.com"
+    : "https://api-m.paypal.com";
 
 const PLAN_ENV_KEYS: Record<Exclude<SubscriptionTier, "free_trial" | "starter_free">, string> = {
   pro_scholar: "PAYPAL_PLAN_PRO_SCHOLAR",
@@ -41,7 +41,7 @@ async function getAccessToken(): Promise<string> {
 
   if (!res.ok) {
     const errorText = await res.text();
-    const env = process.env.PAYPAL_ENV === "live" ? "LIVE" : "SANDBOX";
+    const env = process.env.PAYPAL_ENV === "sandbox" ? "SANDBOX" : "LIVE";
     throw new Error(`PayPal auth failed (Status: ${res.status}, Env: ${env}). Please check your Client ID and Secret. Details: ${errorText}`);
   }
   const data = (await res.json()) as { access_token: string };

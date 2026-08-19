@@ -71,6 +71,7 @@ Open [http://localhost:3000](http://localhost:3000)
    - `GEMINI_API_KEY`
    - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
    - `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`
+   - `PAYPAL_ENV` (defaults to `live`, set to `sandbox` for testing)
    - `PAYPAL_PLAN_INDIVIDUAL`, `PAYPAL_PLAN_FAMILY`, etc.
    - `BLOB_READ_WRITE_TOKEN` (optional, for file storage)
    - `ADMIN_EMAIL` (grants admin role on login)
