@@ -1,7 +1,7 @@
 import { SubscriptionTier } from "@/types";
 
 const PAYPAL_API =
-  process.env.PAYPAL_ENV === "sandbox"
+  process.env.PAYPAL_ENV === "live"
     ? "https://api-m.sandbox.paypal.com"
     : "https://api-m.paypal.com";
 
@@ -60,7 +60,7 @@ export async function createPayPalProduct() {
       name: "ExamCoach Subscription",
       description: "Access to ExamCoach study methods and AI tools",
       type: "SERVICE",
-      category: "EDUCATIONAL_SERVICES",
+      category: "EDUCATIONAL_AND_TEXTBOOKS",
       image_url: "https://examcoach-rorw.onrender.com/icons/icon-192x192.png",
       home_url: "https://examcoach-rorw.onrender.com",
     }),
