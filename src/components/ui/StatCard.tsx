@@ -12,7 +12,7 @@ export function StatCard({
   label: string;
   value: string | number;
   hint?: string;
-  tone?: "default" | "primary" | "success" | "warning" | "danger";
+  tone?: "default" | "primary" | "success" | "warning" | "danger" | "admin";
 }) {
   const tones = {
     default: "text-slate-500 dark:text-slate-400",
