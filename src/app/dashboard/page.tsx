@@ -14,6 +14,7 @@ import { WeaknessHeatmap } from "@/components/dashboard/WeaknessHeatmap";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { UploadQuotaCard } from "@/components/dashboard/UploadQuotaCard";
 import { PlanPanel } from "@/components/dashboard/PlanPanel";
+import { PaynowStatusChecker } from "@/components/dashboard/PaynowStatusChecker";
 import { DashboardStats, SubscriptionStatus, UploadQuota } from "@/types";
 
 export default function DashboardPage() {
@@ -80,6 +81,8 @@ export default function DashboardPage() {
         </h1>
         <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.common.tagline}</p>
       </header>
+
+      <PaynowStatusChecker />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <StreakCard

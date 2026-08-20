@@ -9,6 +9,7 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { PLANS } from "@/lib/plans";
 import { formatCurrency } from "@/lib/utils";
 import { SubscriptionStatus, SubscriptionTier } from "@/types";
+import { PaymentMethodModal } from "@/components/shared/PaymentMethodModal";
 
 export default function PricingPage() {
   const { t } = useI18n();
@@ -16,6 +17,8 @@ export default function PricingPage() {
   const { status } = useSession();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [pending, setPending] = useState<SubscriptionTier | null>(null);
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -24,6 +27,42 @@ export default function PricingPage() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setSubscription(data as SubscriptionStatus | null));
   }, [status]);
+
+  async function handleSelection(method: "paypal" | "paynow") {
+    if (!selectedTier) return;
+    
+    setShowModal(false);
+    setPending(selectedTier);
+    setError("");
+
+    const endpoint = method === "paypal" ? "/api/paypal/create-subscription" : "/api/paynow/create-payment";
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier: selectedTier }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setError(data.error ?? t.common.error);
+        return;
+      }
+      
+      const redirectUrl = method === "paypal" ? data.approvalUrl : data.checkoutUrl;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        setError(t.common.error);
+      }
+    } catch {
+      setError(t.common.error);
+    } finally {
+      setPending(null);
+      setSelectedTier(null);
+    }
+  }
 
   async function subscribe(tier: SubscriptionTier) {
     if (status !== "authenticated") {
@@ -36,25 +75,8 @@ export default function PricingPage() {
       return;
     }
 
-    setPending(tier);
-    setError("");
-    try {
-      const res = await fetch("/api/paypal/create-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
-      });
-      const data = (await res.json()) as { approvalUrl?: string; error?: string };
-      if (!res.ok || !data.approvalUrl) {
-        setError(data.error ?? t.common.error);
-        return;
-      }
-      window.location.href = data.approvalUrl;
-    } catch {
-      setError(t.common.error);
-    } finally {
-      setPending(null);
-    }
+    setSelectedTier(tier);
+    setShowModal(true);
   }
 
   return (
@@ -143,6 +165,13 @@ export default function PricingPage() {
           );
         })}
       </div>
+
+      <PaymentMethodModal 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSelect={handleSelection}
+        tierName={PLANS.find(p => p.id === selectedTier)?.name || ""}
+      />
 
       <section className="mt-20 rounded-3xl bg-surface-canvas p-8 dark:bg-slate-900/50">
         <h2 className="mb-8 text-center text-xl font-bold">Why upgrade?</h2>
