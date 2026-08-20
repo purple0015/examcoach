@@ -169,7 +169,7 @@ export default function LoginPage() {
             </div>
             <h2 className="text-xl font-bold">Administrator Activation Required</h2>
             <p className="mt-2 text-brand-text-secondary dark:text-slate-400">
-              Your organization's trial period has ended. Please contact your administrator to activate the full plan to continue studying.
+              Your organization&apos;s trial period has ended. Please contact your administrator to activate the full plan to continue studying.
             </p>
             <div className="mt-6">
               <button
