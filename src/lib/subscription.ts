@@ -81,7 +81,7 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
       maxSeats: org.seatLimit,
       limits: {
         dailyUploads: org.dailyUploadsLimit,
-        FileSizeMb: org.maxFileSizeMb,
+        maxFileSizeMb: org.maxFileSizeMb,
         MockExamQuestions: org.maxMockExamQuestions,
         groqTokensLimit: org.groqTokensLimit,
         priorityAiProcessing: org.priorityAiProcessing,
