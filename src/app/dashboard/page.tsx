@@ -78,7 +78,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold sm:text-3xl">
           {t.dashboard.greeting}, {session?.user?.name ?? ""}
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t.common.tagline}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{t.common.tagline}</p>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-3">

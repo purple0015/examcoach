@@ -97,14 +97,14 @@ export function GuidedWorkspace({ method }: { method: StudyMethodId }) {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.study.notesLocal}</p>
+        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">{t.study.notesLocal}</p>
       </div>
 
       {loading && (
         <div className="card flex justify-center py-8">
           <div className="text-center">
             <LoadingSpinner size="md" />
-            <p className="mt-2 text-sm text-slate-500">AI is analyzing your study notes...</p>
+            <p className="mt-2 text-sm text-stone-500">AI is analyzing your study notes...</p>
           </div>
         </div>
       )}
@@ -132,16 +132,16 @@ export function GuidedWorkspace({ method }: { method: StudyMethodId }) {
           
           <div className="mt-4 space-y-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Critique:</p>
-              <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{result.feedback}</p>
+              <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Critique:</p>
+              <p className="mt-1 text-sm leading-relaxed text-stone-600 dark:text-stone-300">{result.feedback}</p>
             </div>
 
             {result.gaps.length > 0 && (
               <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Knowledge Gaps Identified:</p>
+                <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Knowledge Gaps Identified:</p>
                 <ul className="mt-2 space-y-2">
                   {result.gaps.map((gap, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-stone-600 dark:text-stone-300">
                       <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" />
                       {gap}
                     </li>

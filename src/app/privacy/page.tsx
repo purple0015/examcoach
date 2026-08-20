@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <AppShell width="narrow">
       <h1 className="text-2xl font-bold">{t.footer.privacy}</h1>
-      <div className="card mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+      <div className="card mt-6 space-y-3 text-sm text-stone-600 dark:text-stone-300">
         <p>
           ExamCoach stores the account details you provide (name, email), the study material you
           upload, and the study activity used to calculate streaks, goals and progress.

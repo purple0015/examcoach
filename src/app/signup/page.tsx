@@ -61,7 +61,7 @@ export default function SignupPage() {
     <AppShell width="narrow">
       <div className="card">
         <h1 className="text-2xl font-bold">{t.auth.signupTitle}</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.auth.signupSubtitle}</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t.auth.signupSubtitle}</p>
 
         <div className="mt-4 space-y-2">
           <p className="text-sm font-medium">{t.common.language}</p>
@@ -110,7 +110,7 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.auth.passwordHint}</p>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{t.auth.passwordHint}</p>
           </div>
 
           {error && (
@@ -124,7 +124,7 @@ export default function SignupPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
           {t.auth.haveAccount}{" "}
           <Link href="/login" className="font-medium text-primary-600 dark:text-primary-400">
             {t.common.login}

@@ -11,8 +11,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#4F46E5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F172A" },
+    { media: "(prefers-color-scheme: light)", color: "#ea580c" },
+    { media: "(prefers-color-scheme: dark)", color: "#1c1917" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -48,10 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={`${inter.className} flex min-h-screen flex-col`}>
-        <Providers initialLocale={locale} initialTheme={theme}>
-          {children}
-        </Providers>
+      <body className={`${inter.className} flex min-h-screen flex-col bg-stone-50 dark:bg-stone-950 p-2 md:p-4 lg:p-6`}>
+        <div className="flex-1 flex flex-col bg-white border border-stone-200 rounded-[2.5rem] md:rounded-[4rem] lg:rounded-[5rem] shadow-sm overflow-hidden dark:bg-stone-900 dark:border-stone-800 transition-colors duration-200">
+          <Providers initialLocale={locale} initialTheme={theme}>
+            {children}
+          </Providers>
+        </div>
       </body>
     </html>
   );

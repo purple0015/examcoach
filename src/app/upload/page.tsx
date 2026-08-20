@@ -126,7 +126,7 @@ export default function UploadPage() {
     <AppShell>
       <header className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">{t.upload.title}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t.upload.subtitle}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{t.upload.subtitle}</p>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -147,7 +147,7 @@ export default function UploadPage() {
             className={`card flex flex-col items-center justify-center border-2 border-dashed py-14 text-center transition-colors ${
               dragging
                 ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30"
-                : "border-slate-300 dark:border-slate-700"
+                : "border-stone-300 dark:border-stone-700"
             } ${disabled ? "opacity-60" : ""}`}
           >
             {uploading ? (
@@ -161,7 +161,7 @@ export default function UploadPage() {
                   className="h-10 w-10 text-primary-600 dark:text-primary-400"
                   aria-hidden
                 />
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-3 text-sm text-stone-600 dark:text-stone-300">
                   {t.upload.dropzone}{" "}
                   <button
                     type="button"
@@ -172,7 +172,7 @@ export default function UploadPage() {
                     {t.upload.browse}
                   </button>
                 </p>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                   {t.upload.maxSize}: {displayQuota.maxFileSizeMb}MB · PDF, DOCX, TXT
                 </p>
               </>
@@ -209,7 +209,7 @@ export default function UploadPage() {
       <section className="mt-8">
         <h2 className="section-title">{t.upload.recentUploads}</h2>
         {documents.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t.upload.noUploads}</p>
+          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{t.upload.noUploads}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {documents.map((doc) => (
@@ -217,7 +217,7 @@ export default function UploadPage() {
                 <FileText className="mt-1 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
                 <div className="min-w-0">
                   <p className="truncate font-medium">{doc.filename}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
                     {t.upload.topics}: {doc.topics.join(", ") || "—"}
                   </p>
                 </div>

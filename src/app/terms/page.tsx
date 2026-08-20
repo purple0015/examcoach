@@ -9,7 +9,7 @@ export default function TermsPage() {
   return (
     <AppShell width="narrow">
       <h1 className="text-2xl font-bold">{t.footer.terms}</h1>
-      <div className="card mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+      <div className="card mt-6 space-y-3 text-sm text-stone-600 dark:text-stone-300">
         <p>
           ExamCoach provides AI-generated study material. Answers may contain mistakes, so always
           check important facts against your syllabus and teacher.

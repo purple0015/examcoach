@@ -28,7 +28,7 @@ export function ProgressRing({
             cy={size / 2}
             r={radius}
             strokeWidth={stroke}
-            className="fill-none stroke-slate-200 dark:stroke-slate-800"
+            className="fill-none stroke-stone-200 dark:stroke-stone-800"
           />
           <circle
             cx={size / 2}
@@ -43,10 +43,10 @@ export function ProgressRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-2xl font-bold">{clamped}%</span>
-          {caption && <span className="text-xs text-slate-500 dark:text-slate-400">{caption}</span>}
+          {caption && <span className="text-xs text-stone-500 dark:text-stone-400">{caption}</span>}
         </div>
       </div>
-      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{label}</p>
+      <p className="text-sm font-medium text-stone-600 dark:text-stone-300">{label}</p>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export function StatCard({
   tone?: "default" | "primary" | "success" | "warning" | "danger" | "admin";
 }) {
   const tones = {
-    default: "text-slate-500 dark:text-slate-400",
+    default: "text-stone-500 dark:text-stone-400",
     primary: "text-primary-600 dark:text-primary-400",
     success: "text-success-600 dark:text-success-500",
     warning: "text-warning-600 dark:text-warning-500",
@@ -24,13 +24,13 @@ export function StatCard({
   };
 
   return (
-    <div className="card flex flex-col gap-1 p-4 border-slate-200/60 dark:border-slate-800/60">
+    <div className="card flex flex-col gap-1 p-4 border-stone-200/60 dark:border-stone-800/60">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+        <span className="text-xs font-medium text-stone-500 dark:text-stone-400">{label}</span>
         <Icon className={cn("h-4 w-4", tone === "admin" ? "text-orange-500" : tones[tone])} aria-hidden />
       </div>
       <span className="text-2xl font-bold text-orange-600/90 dark:text-orange-400/90">{value}</span>
-      {hint && <span className="text-xs text-slate-500 dark:text-slate-400">{hint}</span>}
+      {hint && <span className="text-xs text-stone-500 dark:text-stone-400">{hint}</span>}
     </div>
   );
 }

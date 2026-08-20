@@ -27,12 +27,12 @@ export function QuickActions({ tier }: { tier: SubscriptionTier }) {
             <Link
               key={method.id}
               href={method.href}
-              className="group flex items-start gap-3 rounded-xl border border-slate-200 p-3 transition-colors hover:border-primary-400 hover:bg-primary-50/60 dark:border-slate-800 dark:hover:border-primary-600 dark:hover:bg-primary-950/30"
+              className="group flex items-start gap-3 rounded-xl border border-stone-200 p-3 transition-colors hover:border-primary-400 hover:bg-primary-50/60 dark:border-stone-800 dark:hover:border-primary-600 dark:hover:bg-primary-950/30"
             >
               <Icon className="mt-0.5 h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
               <span>
                 <span className="block text-sm font-semibold">{copy.name}</span>
-                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                <span className="block text-xs text-stone-500 dark:text-stone-400">
                   {method.minutes} {t.common.minutes}
                 </span>
               </span>

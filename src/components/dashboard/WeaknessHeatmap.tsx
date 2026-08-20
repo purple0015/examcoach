@@ -17,7 +17,7 @@ export function WeaknessHeatmap({ cells }: { cells: WeaknessCell[] }) {
     <div className="card">
       <h2 className="mb-4 font-semibold">{t.dashboard.weaknessHeatmap}</h2>
       {cells.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t.dashboard.noWeakness}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{t.dashboard.noWeakness}</p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
           {cells.map((cell) => (

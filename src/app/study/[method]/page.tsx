@@ -62,14 +62,14 @@ export default function StudyMethodPage({ params }: { params: { method: string }
           ← {t.study.title}
         </Link>
         <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{copy.name}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{copy.description}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{copy.description}</p>
       </header>
 
       {!allowed ? (
         <div className="card text-center">
-          <Lock className="mx-auto h-8 w-8 text-slate-400" aria-hidden />
+          <Lock className="mx-auto h-8 w-8 text-stone-400" aria-hidden />
           <p className="mt-3 font-medium">{t.study.lockedTitle}</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
             {format(t.study.unlockWith, {
               plan: getPlanByTier(lowestTierWithMethod(method.id)).name,
             })}

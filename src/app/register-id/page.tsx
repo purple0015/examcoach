@@ -57,7 +57,7 @@ export default function RegisterIdPage() {
     <AppShell width="narrow">
       <div className="card">
         <h1 className="text-2xl font-bold">Register Organization ID</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Claim your admin-generated ID to start studying.</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Claim your admin-generated ID to start studying.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -83,7 +83,7 @@ export default function RegisterIdPage() {
             </div>
           </div>
 
-          <hr className="my-2 border-slate-100 dark:border-slate-800" />
+          <hr className="my-2 border-stone-100 dark:border-stone-800" />
 
           <div>
             <label className="text-sm font-medium">Your Name</label>
@@ -143,7 +143,7 @@ export default function RegisterIdPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-primary-600 dark:text-primary-400">
             {t.common.login}

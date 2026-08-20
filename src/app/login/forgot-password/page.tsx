@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
     <AppShell width="narrow">
       <div className="card">
         <h1 className="text-2xl font-bold">Reset Password</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
           {step === 1 ? "Enter your email to receive a 6-digit verification code." : "Enter the code sent to your email and your new password."}
         </p>
 
@@ -130,7 +130,7 @@ export default function ForgotPasswordPage() {
           </form>
         )}
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
           Remembered your password?{" "}
           <Link href="/login" className="font-medium text-primary-600 dark:text-primary-400">
             {t.common.login}

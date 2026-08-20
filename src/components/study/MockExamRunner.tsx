@@ -209,7 +209,7 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
                               ? "border-red-500 bg-red-50 dark:bg-red-950/40"
                               : chosen
                                 ? "border-primary-500 bg-primary-50 dark:bg-primary-950/40"
-                                : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60"
+                                : "border-stone-200 hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800/60"
                         )}
                       >
                         {option}
@@ -218,7 +218,7 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
                   })}
                 </div>
                 {submitted && (
-                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
                     {question.explanation}
                   </p>
                 )}

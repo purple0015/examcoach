@@ -47,13 +47,13 @@ export default function LoginPage() {
     <AppShell width="narrow">
       <div className="card">
         <h1 className="text-2xl font-bold">{t.auth.loginTitle}</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.auth.loginSubtitle}</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t.auth.loginSubtitle}</p>
 
-        <div className="mt-6 flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/50">
+        <div className="mt-6 flex rounded-xl bg-stone-100 p-1 dark:bg-stone-800/50">
           <button
             onClick={() => setType("email")}
             className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
-              type === "email" ? "bg-white text-primary-600 shadow-sm dark:bg-slate-700 dark:text-primary-400" : "text-slate-500"
+              type === "email" ? "bg-white text-primary-600 shadow-sm dark:bg-stone-700 dark:text-primary-400" : "text-stone-500"
             }`}
           >
             Email Login
@@ -61,7 +61,7 @@ export default function LoginPage() {
           <button
             onClick={() => setType("id")}
             className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
-              type === "id" ? "bg-white text-primary-600 shadow-sm dark:bg-slate-700 dark:text-primary-400" : "text-slate-500"
+              type === "id" ? "bg-white text-primary-600 shadow-sm dark:bg-stone-700 dark:text-primary-400" : "text-stone-500"
             }`}
           >
             Login with ID
@@ -122,14 +122,14 @@ export default function LoginPage() {
           {t.auth.googleContinue}
         </button>
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-stone-500 dark:text-stone-400">
           Have an Organization ID?{" "}
           <Link href="/register-id" className="font-medium text-primary-600 dark:text-primary-400">
             Register it here
           </Link>
         </p>
 
-        <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-center text-sm text-stone-500 dark:text-stone-400">
           {t.auth.noAccount}{" "}
           <Link href="/signup" className="font-medium text-primary-600 dark:text-primary-400">
             {t.common.signup}

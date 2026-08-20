@@ -17,14 +17,14 @@ export default function LandingPage() {
 
   return (
     <AppShell>
-      <section className="rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-900 px-6 py-16 text-center text-white sm:px-12">
+      <section className="rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-orange-900 px-6 py-16 text-center text-white sm:px-12">
         <span className="chip bg-white/15 text-white">{t.common.tagline}</span>
         <h1 className="mt-5 text-3xl font-bold sm:text-5xl">{t.landing.heroTitle}</h1>
         <p className="mx-auto mt-4 max-w-2xl text-base text-white/80 sm:text-lg">
           {t.landing.heroSubtitle}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/signup" className="btn bg-white text-primary-700 hover:bg-slate-100">
+          <Link href="/signup" className="btn bg-white text-primary-700 hover:bg-stone-100">
             {t.landing.ctaPrimary}
           </Link>
           <Link href="/pricing" className="btn border border-white/40 text-white hover:bg-white/10">
@@ -41,7 +41,7 @@ export default function LandingPage() {
             <article key={feature.title} className="card">
               <feature.icon className="h-6 w-6 text-primary-600 dark:text-primary-400" aria-hidden />
               <h3 className="mt-3 font-semibold">{feature.title}</h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{feature.body}</p>
+              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{feature.body}</p>
             </article>
           ))}
         </div>
@@ -49,7 +49,7 @@ export default function LandingPage() {
 
       <section className="mt-12 text-center">
         <h2 className="section-title">{t.landing.readyToStart}</h2>
-        <p className="mt-2 text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-stone-500 dark:text-stone-400">
           {t.landing.joinThousands}
         </p>
         <div className="mt-6">

@@ -209,7 +209,7 @@ export default function AdminPage() {
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <XCircle className="mb-4 h-12 w-12 text-red-500" />
           <h2 className="text-xl font-bold">{error}</h2>
-          <p className="mt-2 text-slate-500">Please log in as the system administrator.</p>
+          <p className="mt-2 text-stone-500">Please log in as the system administrator.</p>
         </div>
       </AppShell>
     );
@@ -227,7 +227,7 @@ export default function AdminPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl">
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200 bg-[#FAFAFA] p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900/50 md:p-12">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-stone-200 bg-[#FAFAFA] p-8 shadow-sm dark:border-stone-800 dark:bg-stone-900/50 md:p-12">
           {/* Subtle gradient center shine */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_white_0%,_transparent_70%)] opacity-50 dark:opacity-10 pointer-events-none" />
           
@@ -241,15 +241,15 @@ export default function AdminPage() {
                   Monitoring & Unlimited Access Panel
                 </p>
               </div>
-              <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/50">
+              <div className="flex rounded-xl bg-stone-100 p-1 dark:bg-stone-800/50">
                 {(["stats", "users", "payments", "orgs", "ids"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`rounded-lg px-6 py-2.5 text-sm font-bold transition-all ${
                       activeTab === tab
-                        ? "bg-white text-orange-600 shadow-sm dark:bg-slate-700 dark:text-orange-400"
-                        : "text-slate-500 hover:text-orange-600/70 dark:text-slate-400"
+                        ? "bg-white text-orange-600 shadow-sm dark:bg-stone-700 dark:text-orange-400"
+                        : "text-stone-500 hover:text-orange-600/70 dark:text-stone-400"
                     }`}
                   >
                     {tab === "orgs" ? "Organizations" : tab === "ids" ? "Group IDs" : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -270,10 +270,10 @@ export default function AdminPage() {
                 </div>
 
                 <div className="grid gap-8 md:grid-cols-2">
-                  <section className="card border-slate-200/60 bg-white/50 dark:bg-slate-800/20">
+                  <section className="card border-stone-200/60 bg-white/50 dark:bg-stone-800/20">
                     <div className="mb-6 flex items-center gap-3">
                       <Activity className="h-6 w-6 text-orange-500" />
-                      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Plan Distribution</h2>
+                      <h2 className="text-xl font-bold text-stone-800 dark:text-stone-200">Plan Distribution</h2>
                     </div>
                     <ul className="space-y-4">
                       {PLANS.map((plan) => {
@@ -282,10 +282,10 @@ export default function AdminPage() {
                         return (
                           <li key={plan.id}>
                             <div className="mb-2 flex justify-between text-sm">
-                              <span className="font-bold text-slate-700 dark:text-slate-300">{plan.name}</span>
+                              <span className="font-bold text-stone-700 dark:text-stone-300">{plan.name}</span>
                               <span className="text-orange-600 font-medium">{count} users ({percentage.toFixed(1)}%)</span>
                             </div>
-                            <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800">
+                            <div className="h-2.5 w-full rounded-full bg-stone-100 dark:bg-stone-800">
                               <div 
                                 className="h-full rounded-full bg-gradient-to-r from-peach-400 via-orange-400 to-amber-500" 
                                 style={{ 
@@ -300,10 +300,10 @@ export default function AdminPage() {
                     </ul>
                   </section>
 
-                  <section className="card border-slate-200/60 bg-white/50 dark:bg-slate-800/20">
+                  <section className="card border-stone-200/60 bg-white/50 dark:bg-stone-800/20">
                     <div className="mb-6 flex items-center gap-3">
                       <TrendingUp className="h-6 w-6 text-orange-500" />
-                      <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">System Health</h2>
+                      <h2 className="text-xl font-bold text-stone-800 dark:text-stone-200">System Health</h2>
                     </div>
                     <div className="space-y-6">
                       <div className="rounded-2xl border border-orange-100 bg-orange-50/50 p-5 dark:border-orange-900/20 dark:bg-orange-900/5">
@@ -316,12 +316,12 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Database Load</p>
+                        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-stone-900 border border-stone-100 dark:border-stone-800">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Database Load</p>
                           <p className="text-2xl font-black text-orange-600">2.4%</p>
                         </div>
-                        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Storage Used</p>
+                        <div className="rounded-2xl bg-white p-4 shadow-sm dark:bg-stone-900 border border-stone-100 dark:border-stone-800">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Storage Used</p>
                           <p className="text-2xl font-black text-orange-600">14.2 GB</p>
                         </div>
                       </div>
@@ -346,14 +346,14 @@ export default function AdminPage() {
                     placeholder="Search users by name or email..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-6 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-orange-500/20 dark:border-slate-800 dark:bg-slate-900"
+                    className="w-full rounded-2xl border border-stone-200 bg-white py-4 pl-12 pr-6 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-orange-500/20 dark:border-stone-800 dark:bg-stone-900"
                   />
                 </div>
 
-                <div className="card overflow-hidden border-slate-200/60 p-0 shadow-sm">
+                <div className="card overflow-hidden border-stone-200/60 p-0 shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                      <thead className="border-b bg-slate-50/50 text-slate-500 dark:bg-slate-800/50">
+                      <thead className="border-b bg-stone-50/50 text-stone-500 dark:bg-stone-800/50">
                         <tr>
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">User</th>
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Tier</th>
@@ -362,18 +362,18 @@ export default function AdminPage() {
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px] text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                         {filteredUsers.map((user) => (
                           <tr key={user.id} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors">
                             <td className="px-6 py-5">
-                              <div className="font-bold text-slate-800 dark:text-slate-200">{user.name || "Unnamed User"}</div>
+                              <div className="font-bold text-stone-800 dark:text-stone-200">{user.name || "Unnamed User"}</div>
                               <div className="text-xs text-orange-600/70 dark:text-orange-400/70 font-medium">{user.email}</div>
                             </td>
                             <td className="px-6 py-5">
                               <select 
                                 value={user.subscriptions[0]?.tier || "starter_free"}
                                 onChange={(e) => void updateSubscription(user.id, e.target.value)}
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                className="rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-bold text-stone-700 outline-none transition-all focus:ring-2 focus:ring-orange-500/20 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300"
                               >
                                 {PLANS.map(p => (
                                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -386,13 +386,13 @@ export default function AdminPage() {
                                 <div title="Documents" className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5" />{user._count.documents}</div>
                               </div>
                             </td>
-                            <td className="px-6 py-5 text-slate-500 font-medium">
+                            <td className="px-6 py-5 text-stone-500 font-medium">
                               {new Date(user.createdAt).toLocaleDateString()}
                             </td>
                             <td className="px-6 py-5 text-right">
                               <button 
                                 onClick={() => void deleteUser(user.id)}
-                                className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20"
+                                className="rounded-xl p-2.5 text-stone-400 transition-all hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
@@ -407,10 +407,10 @@ export default function AdminPage() {
             )}
 
             {activeTab === "payments" && (
-              <div className="card overflow-hidden border-slate-200/60 p-0 shadow-sm">
+              <div className="card overflow-hidden border-stone-200/60 p-0 shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
-                    <thead className="border-b bg-slate-50/50 text-slate-500 dark:bg-slate-800/50">
+                    <thead className="border-b bg-stone-50/50 text-stone-500 dark:bg-stone-800/50">
                       <tr>
                         <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Date</th>
                         <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">User</th>
@@ -420,13 +420,13 @@ export default function AdminPage() {
                         <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Reference</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                       {allPayments.map((payment: any) => (
                         <tr key={payment.id} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors">
-                          <td className="px-6 py-5 text-slate-500 font-medium">
+                          <td className="px-6 py-5 text-stone-500 font-medium">
                             {new Date(payment.createdAt).toLocaleString()}
                           </td>
-                          <td className="px-6 py-5 font-bold text-slate-800 dark:text-slate-200">{payment.userEmail}</td>
+                          <td className="px-6 py-5 font-bold text-stone-800 dark:text-stone-200">{payment.userEmail}</td>
                           <td className="px-6 py-5"><span className="text-[10px] font-black uppercase tracking-widest text-orange-600/70 bg-orange-50 px-2 py-1 rounded-lg dark:bg-orange-900/20">{payment.gateway}</span></td>
                           <td className="px-6 py-5 font-black text-orange-600">{formatCurrency(payment.amount)}</td>
                           <td className="px-6 py-5">
@@ -440,7 +440,7 @@ export default function AdminPage() {
                               {payment.status}
                             </span>
                           </td>
-                          <td className="px-6 py-5 font-mono text-[10px] text-slate-400">{payment.reference}</td>
+                          <td className="px-6 py-5 font-mono text-[10px] text-stone-400">{payment.reference}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -462,10 +462,10 @@ export default function AdminPage() {
                   </form>
                 </section>
 
-                <div className="card overflow-hidden border-slate-200/60 p-0 shadow-sm">
+                <div className="card overflow-hidden border-stone-200/60 p-0 shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                      <thead className="border-b bg-slate-50/50 text-slate-500 dark:bg-slate-800/50">
+                      <thead className="border-b bg-stone-50/50 text-stone-500 dark:bg-stone-800/50">
                         <tr>
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Organization</th>
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Slug</th>
@@ -475,11 +475,11 @@ export default function AdminPage() {
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px] text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                         {orgs.map((org) => (
                           <tr key={org.id} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors">
                             <td className="px-6 py-5 font-bold">{org.name}</td>
-                            <td className="px-6 py-5 text-slate-500">{org.slug}</td>
+                            <td className="px-6 py-5 text-stone-500">{org.slug}</td>
                             <td className="px-6 py-5 font-mono font-bold text-orange-600">{org.prefix}</td>
                             <td className="px-6 py-5">
                               <div className="flex gap-2">
@@ -522,10 +522,10 @@ export default function AdminPage() {
                   </form>
                 </section>
 
-                <div className="card overflow-hidden border-slate-200/60 p-0 shadow-sm">
+                <div className="card overflow-hidden border-stone-200/60 p-0 shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                      <thead className="border-b bg-slate-50/50 text-slate-500 dark:bg-slate-800/50">
+                      <thead className="border-b bg-stone-50/50 text-stone-500 dark:bg-stone-800/50">
                         <tr>
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Code</th>
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Temp Password</th>
@@ -534,11 +534,11 @@ export default function AdminPage() {
                           <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Claimed</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                         {ids.map((id) => (
                           <tr key={id.id} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors">
                             <td className="px-6 py-5 font-mono font-bold text-orange-600">{id.code}</td>
-                            <td className="px-6 py-5 font-mono text-slate-500">{id.tempPassword}</td>
+                            <td className="px-6 py-5 font-mono text-stone-500">{id.tempPassword}</td>
                             <td className="px-6 py-5">{id.organization.name}</td>
                             <td className="px-6 py-5">
                               <span className={`rounded-lg px-2 py-1 text-[10px] font-black uppercase ${id.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>

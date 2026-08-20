@@ -29,7 +29,7 @@ export function NavBar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
+    <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/85 backdrop-blur dark:border-stone-800 dark:bg-stone-950/85">
       <nav className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
         <Link href={session ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-600 text-white">
@@ -48,7 +48,7 @@ export function NavBar() {
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   pathname === href || pathname.startsWith(`${href}/`)
                     ? "bg-primary-50 text-primary-700 dark:bg-primary-950/50 dark:text-primary-300"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                    : "text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
                 )}
               >
                 <Icon className="h-4 w-4" aria-hidden />
@@ -93,7 +93,7 @@ export function NavBar() {
       </nav>
 
       {open && (
-        <div className="border-t border-slate-200 px-4 py-3 md:hidden dark:border-slate-800">
+        <div className="border-t border-stone-200 px-4 py-3 md:hidden dark:border-stone-800">
           <div className="flex flex-col gap-1">
             {session &&
               links.map(({ href, label, icon: Icon }) => (
@@ -101,7 +101,7 @@ export function NavBar() {
                   key={href}
                   href={href}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800"
                 >
                   <Icon className="h-4 w-4" aria-hidden />
                   {label}

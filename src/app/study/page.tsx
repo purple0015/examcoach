@@ -45,7 +45,7 @@ export default function StudyMethodsPage() {
     <AppShell>
       <header className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">{t.study.title}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t.study.subtitle}</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">{t.study.subtitle}</p>
       </header>
 
       <h2 className="section-title">{t.study.available}</h2>
@@ -57,10 +57,10 @@ export default function StudyMethodsPage() {
             <Link key={method.id} href={method.href} className="card transition-shadow hover:shadow-md">
               <Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" aria-hidden />
               <h3 className="mt-3 font-semibold">{t.study.methods[method.id].name}</h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
                 {t.study.methods[method.id].description}
               </p>
-              <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
                 {t.study.duration}: {method.minutes} {t.common.minutes} · {t.study.intensity}:{" "}
                 {t.study[method.intensity]}
               </p>
@@ -75,12 +75,12 @@ export default function StudyMethodsPage() {
           <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {locked.map((method) => (
               <div key={method.id} className="card-muted">
-                <div className="flex items-center gap-2 text-slate-400">
+                <div className="flex items-center gap-2 text-stone-400">
                   <Lock className="h-4 w-4" aria-hidden />
                   <span className="text-xs uppercase tracking-wide">{t.common.locked}</span>
                 </div>
                 <h3 className="mt-3 font-semibold">{t.study.methods[method.id].name}</h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
                   {t.study.methods[method.id].description}
                 </p>
                 <Link href="/pricing" className="btn-secondary mt-4 w-full justify-center">
