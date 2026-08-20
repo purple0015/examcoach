@@ -25,7 +25,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"stats" | "users" | "payments">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "users" | "payments" | "orgs" | "ids">("stats");
+  const [orgs, setOrgs] = useState<any[]>([]);
+  const [ids, setIds] = useState<any[]>([]);
 
   const isAdmin = session?.user?.email === "purpleteddy002@gmail.com" || session?.user?.role === "admin";
 
@@ -40,18 +42,19 @@ export default function AdminPage() {
 
     const fetchData = async () => {
       try {
-        const [statsRes, usersRes] = await Promise.all([
+        const [statsRes, usersRes, orgsRes, idsRes] = await Promise.all([
           fetch("/api/admin/stats"),
-          fetch("/api/admin/management")
+          fetch("/api/admin/management"),
+          fetch("/api/admin/organizations"),
+          fetch("/api/admin/generate-ids")
         ]);
 
-        if (!statsRes.ok || !usersRes.ok) throw new Error("Failed to fetch admin data");
+        if (!statsRes.ok || !usersRes.ok || !orgsRes.ok || !idsRes.ok) throw new Error("Failed to fetch admin data");
 
-        const statsData = await statsRes.json();
-        const usersData = await usersRes.json();
-
-        setStats(statsData);
-        setUsers(usersData);
+        setStats(await statsRes.json());
+        setUsers(await usersRes.json());
+        setOrgs(await orgsRes.json());
+        setIds(await idsRes.json());
       } catch (err) {
         setError("Error loading system data");
       } finally {
@@ -61,6 +64,76 @@ export default function AdminPage() {
 
     void fetchData();
   }, [status, router, isAdmin]);
+
+  const generateIds = async (orgId: string, count: number, status: string) => {
+    try {
+      const res = await fetch("/api/admin/generate-ids", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgId, count, status }),
+      });
+      if (res.ok) {
+        const newIds = await res.json();
+        setIds([...newIds, ...ids]);
+        alert(`Successfully generated ${count} IDs`);
+      }
+    } catch {
+      alert("Error generating IDs");
+    }
+  };
+
+  const createOrg = async (e: any) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get("name"),
+      slug: formData.get("slug"),
+      prefix: formData.get("prefix"),
+      colors: {
+        primary: formData.get("primary"),
+        accent: formData.get("accent"),
+      },
+      limits: {
+        dailyUploads: 1000,
+        maxFileSizeMb: 100,
+        mockExamQuestions: 100,
+        flashcardsPerBatch: 50,
+        aiRequestsPerDay: 5000,
+        groqTokenLimit: 5000000,
+        hasPriorityInference: true,
+      }
+    };
+
+    try {
+      const res = await fetch("/api/admin/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const newOrg = await res.json();
+        setOrgs([newOrg, ...orgs]);
+        e.target.reset();
+      }
+    } catch {
+      alert("Error creating organization");
+    }
+  };
+
+  const exportIds = (orgId: string) => {
+    const orgIds = ids.filter(i => i.orgId === orgId);
+    const csv = [
+      ["Code", "Temporary Password", "Status", "Trial Ends At"],
+      ...orgIds.map(i => [i.code, i.tempPassword, i.status, i.trialEndsAt])
+    ].map(e => e.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ids_${orgId}.csv`;
+    a.click();
+  };
 
   const deleteUser = async (userId: string) => {
     if (!confirm("Are you sure you want to delete this user? This action is irreversible.")) return;
@@ -169,7 +242,7 @@ export default function AdminPage() {
                 </p>
               </div>
               <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/50">
-                {(["stats", "users", "payments"] as const).map((tab) => (
+                {(["stats", "users", "payments", "orgs", "ids"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -179,7 +252,7 @@ export default function AdminPage() {
                         : "text-slate-500 hover:text-orange-600/70 dark:text-slate-400"
                     }`}
                   >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    {tab === "orgs" ? "Organizations" : tab === "ids" ? "Group IDs" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </button>
                 ))}
               </div>
@@ -372,6 +445,112 @@ export default function AdminPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+            {activeTab === "orgs" && (
+              <div className="space-y-8">
+                <section className="card">
+                  <h2 className="text-xl font-bold mb-6">Create New Organization</h2>
+                  <form onSubmit={createOrg} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <input name="name" placeholder="Organization Name" required className="input-field" />
+                    <input name="slug" placeholder="Slug (e.g. green-school)" required className="input-field" />
+                    <input name="prefix" placeholder="ID Prefix (2 chars)" required maxLength={2} className="input-field" />
+                    <input name="primary" placeholder="Primary Color (Hex)" className="input-field" />
+                    <input name="accent" placeholder="Accent Color (Hex)" className="input-field" />
+                    <button type="submit" className="btn-primary">Create Organization</button>
+                  </form>
+                </section>
+
+                <div className="card overflow-hidden border-slate-200/60 p-0 shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="border-b bg-slate-50/50 text-slate-500 dark:bg-slate-800/50">
+                        <tr>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Organization</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Slug</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Prefix</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Colors</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Users / IDs</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px] text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {orgs.map((org) => (
+                          <tr key={org.id} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors">
+                            <td className="px-6 py-5 font-bold">{org.name}</td>
+                            <td className="px-6 py-5 text-slate-500">{org.slug}</td>
+                            <td className="px-6 py-5 font-mono font-bold text-orange-600">{org.prefix}</td>
+                            <td className="px-6 py-5">
+                              <div className="flex gap-2">
+                                <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: org.colors?.primary }} />
+                                <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: org.colors?.accent }} />
+                              </div>
+                            </td>
+                            <td className="px-6 py-5">{org._count.users} / {org._count.ids}</td>
+                            <td className="px-6 py-5 text-right">
+                              <button onClick={() => exportIds(org.id)} className="btn-secondary py-1 px-3 text-xs">Export CSV</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "ids" && (
+              <div className="space-y-8">
+                <section className="card">
+                  <h2 className="text-xl font-bold mb-6">Bulk Generate Group IDs</h2>
+                  <form onSubmit={(e: any) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    generateIds(fd.get("orgId") as string, Number(fd.get("count")), fd.get("status") as string);
+                  }} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <select name="orgId" required className="input-field">
+                      <option value="">Select Organization</option>
+                      {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                    </select>
+                    <input name="count" type="number" placeholder="Count" required min={1} max={100} className="input-field" />
+                    <select name="status" className="input-field">
+                      <option value="trial">7-Day Free Trial</option>
+                      <option value="paid">Pre-marked Paid</option>
+                    </select>
+                    <button type="submit" className="btn-primary">Generate IDs</button>
+                  </form>
+                </section>
+
+                <div className="card overflow-hidden border-slate-200/60 p-0 shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="border-b bg-slate-50/50 text-slate-500 dark:bg-slate-800/50">
+                        <tr>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Code</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Temp Password</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Organization</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Status</th>
+                          <th className="px-6 py-5 font-bold uppercase tracking-wider text-[10px]">Claimed</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {ids.map((id) => (
+                          <tr key={id.id} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors">
+                            <td className="px-6 py-5 font-mono font-bold text-orange-600">{id.code}</td>
+                            <td className="px-6 py-5 font-mono text-slate-500">{id.tempPassword}</td>
+                            <td className="px-6 py-5">{id.organization.name}</td>
+                            <td className="px-6 py-5">
+                              <span className={`rounded-lg px-2 py-1 text-[10px] font-black uppercase ${id.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                {id.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-5">{id.isClaimed ? "Yes" : "No"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}

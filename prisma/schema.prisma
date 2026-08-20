@@ -17,6 +17,8 @@ model User {
   role          String    @default("user") // "user" | "admin"
   locale        String    @default("en") // "en" | "nd" | "sn"
   theme         String    @default("system") // "light" | "dark" | "system"
+  orgId         String?
+  orgIdCode     String?   @unique
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -30,6 +32,46 @@ model User {
   quizResults   QuizResult[]
   mockExams     MockExam[]
   payments      Payment[]
+  organization  Organization? @relation(fields: [orgId], references: [id])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  prefix    String   @unique // e.g., "GR"
+  colors    Json?    // { primary: string, accent: string }
+  limits    Json?    // { dailyUploads: number, ... }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+  ids   OrgID[]
+}
+
+model OrgID {
+  id             String    @id @default(cuid())
+  code           String    @unique // e.g., "GR-123456"
+  tempPassword   String
+  isClaimed      Boolean   @default(false)
+  status         String    @default("trial") // "trial" | "paid"
+  trialEndsAt    DateTime?
+  orgId          String
+  userId         String?   @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
 }
 
 model Payment {

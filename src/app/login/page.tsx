@@ -12,8 +12,9 @@ export default function LoginPage() {
   const router = useRouter();
   const callbackUrl = useSearchParams().get("callbackUrl") ?? "/dashboard";
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [type, setType] = useState<"email" | "id">("email");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +24,12 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await signIn("credentials", { email, password, redirect: false });
+      const result = await signIn("credentials", { 
+        identifier: type === "email" ? identifier.toLowerCase() : identifier.toUpperCase(), 
+        password, 
+        type,
+        redirect: false 
+      });
       setLoading(false);
 
       if (result?.error || !result?.ok) {
@@ -43,19 +49,37 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold">{t.auth.loginTitle}</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.auth.loginSubtitle}</p>
 
+        <div className="mt-6 flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/50">
+          <button
+            onClick={() => setType("email")}
+            className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+              type === "email" ? "bg-white text-primary-600 shadow-sm dark:bg-slate-700 dark:text-primary-400" : "text-slate-500"
+            }`}
+          >
+            Email Login
+          </button>
+          <button
+            onClick={() => setType("id")}
+            className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+              type === "id" ? "bg-white text-primary-600 shadow-sm dark:bg-slate-700 dark:text-primary-400" : "text-slate-500"
+            }`}
+          >
+            Login with ID
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label htmlFor="email" className="text-sm font-medium">
-              {t.auth.email}
+            <label htmlFor="identifier" className="text-sm font-medium">
+              {type === "email" ? t.auth.email : "Organization ID (e.g. GR-123456)"}
             </label>
             <input
-              id="email"
-              type="email"
+              id="identifier"
+              type={type === "email" ? "email" : "text"}
               required
-              autoComplete="email"
               className="input-field mt-1"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
             />
           </div>
           <div>
@@ -71,6 +95,12 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+
+          <div className="flex justify-end">
+            <Link href="/login/forgot-password" size="sm" className="text-xs font-medium text-primary-600 dark:text-primary-400">
+              Forgot password?
+            </Link>
           </div>
 
           {error && (
@@ -93,6 +123,13 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          Have an Organization ID?{" "}
+          <Link href="/register-id" className="font-medium text-primary-600 dark:text-primary-400">
+            Register it here
+          </Link>
+        </p>
+
+        <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
           {t.auth.noAccount}{" "}
           <Link href="/signup" className="font-medium text-primary-600 dark:text-primary-400">
             {t.common.signup}

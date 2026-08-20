@@ -16,13 +16,27 @@ const ALLOWED_TYPES = [
 /**
  * Returns the readable text of a file, or null when the bytes are binary
  * (PDF/DOCX containers) and would only produce noise for the parser.
+ * Updated to support non-ASCII international characters.
  */
 async function readableText(file: File): Promise<string | null> {
-  const raw = await file.text();
-  const sample = raw.slice(0, 4000);
-  if (!sample.trim()) return null;
-  const printable = sample.replace(/[^\x09\x0a\x0d\x20-\x7e]/g, "").length;
-  return printable / sample.length > 0.85 ? raw.slice(0, 40000) : null;
+  try {
+    const raw = await file.text();
+    if (!raw || raw.length < 10) return null;
+    
+    const sample = raw.slice(0, 4000);
+    if (!sample.trim()) return null;
+
+    // Count non-printable control characters (excluding common whitespace)
+    // \x00-\x08, \x0B, \x0C, \x0E-\x1F, \x7F
+    const controlChars = sample.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
+    const controlCount = controlChars ? controlChars.length : 0;
+    
+    // If more than 10% are control characters, it's likely binary junk
+    return controlCount / sample.length < 0.1 ? raw.slice(0, 40000) : null;
+  } catch (err) {
+    console.error("Error reading file text:", err);
+    return null;
+  }
 }
 
 export async function POST(req: Request) {
@@ -31,7 +45,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const quota = await reserveUploadSlot(session.user.id);
+  let quota;
+  try {
+    quota = await reserveUploadSlot(session.user.id);
+  } catch (err) {
+    console.error("Quota check failed:", err);
+    return NextResponse.json({ error: "Could not verify upload quota" }, { status: 500 });
+  }
+
   if (!quota.canUpload) {
     return NextResponse.json(
       {
@@ -45,6 +66,7 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
+    
     if (!(file instanceof File)) {
       await releaseUploadSlot(session.user.id);
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -58,7 +80,11 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!ALLOWED_TYPES.includes(file.type) && !/\.(txt|pdf|docx?)$/i.test(file.name)) {
+    // Robust type check: some browsers send empty type for certain files
+    const isAllowedType = ALLOWED_TYPES.includes(file.type);
+    const isAllowedExt = /\.(txt|pdf|docx?)$/i.test(file.name);
+
+    if (!isAllowedType && !isAllowedExt) {
       await releaseUploadSlot(session.user.id);
       return NextResponse.json(
         { error: "Unsupported file type. Use PDF, DOCX or TXT." },
@@ -68,10 +94,16 @@ export async function POST(req: Request) {
 
     let fileUrl = `local://${file.name}`;
     if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(`uploads/${session.user.id}/${Date.now()}-${file.name}`, file, {
-        access: "public",
-      });
-      fileUrl = blob.url;
+      try {
+        const blob = await put(`uploads/${session.user.id}/${Date.now()}-${file.name}`, file, {
+          access: "public",
+        });
+        fileUrl = blob.url;
+      } catch (blobError) {
+        console.error("Vercel Blob upload failed:", blobError);
+        // Fallback to local reference if blob fails but we want the record created
+        // Alternatively, we could throw here if storage is mandatory
+      }
     }
 
     const fallbackTopic = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
@@ -102,23 +134,28 @@ export async function POST(req: Request) {
       },
     });
 
-    await prisma.studySession.create({
-      data: {
-        userId: session.user.id,
-        method: "flashcards",
-        durationMin: 5,
-        topicsStudied: topics.slice(0, 3),
-      },
-    });
+    try {
+      await prisma.studySession.create({
+        data: {
+          userId: session.user.id,
+          method: "flashcards",
+          durationMin: 5,
+          topicsStudied: topics.slice(0, 3),
+        },
+      });
+    } catch (sessionError) {
+      console.error("Failed to create study session record:", sessionError);
+      // Non-critical, we don't fail the whole upload for this
+    }
 
     return NextResponse.json({
       document: { ...document, createdAt: document.createdAt.toISOString() },
       quota: await getUploadQuota(session.user.id),
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("Upload error detail:", error);
     await releaseUploadSlot(session.user.id);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return NextResponse.json({ error: "Upload failed — please check file and try again" }, { status: 500 });
   }
 }
 
@@ -127,5 +164,21 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(await getUploadQuota(session.user.id));
+  
+  try {
+    const quota = await getUploadQuota(session.user.id);
+    return NextResponse.json(quota);
+  } catch (err) {
+    console.error("Failed to fetch upload quota:", err);
+    return NextResponse.json({ 
+      error: "Could not load upload quota",
+      // Fallback minimal quota to allow page to at least render if possible
+      canUpload: false,
+      uploadsToday: 0,
+      maxUploads: 0,
+      uploadsRemaining: 0,
+      maxFileSizeMb: 0,
+      tier: "starter_free"
+    }, { status: 500 });
+  }
 }

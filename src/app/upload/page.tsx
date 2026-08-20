@@ -17,6 +17,7 @@ export default function UploadPage() {
   const { status } = useSession();
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<UploadQuota | null>(null);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -25,10 +26,29 @@ export default function UploadPage() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    const [quotaRes, docsRes] = await Promise.all([fetch("/api/upload"), fetch("/api/documents")]);
-    if (quotaRes.ok) setQuota((await quotaRes.json()) as UploadQuota);
-    if (docsRes.ok) setDocuments((await docsRes.json()) as DocumentSummary[]);
-  }, []);
+    try {
+      const [quotaRes, docsRes] = await Promise.all([
+        fetch("/api/upload"), 
+        fetch("/api/documents")
+      ]);
+      
+      if (quotaRes.ok) {
+        setQuota((await quotaRes.json()) as UploadQuota);
+      } else {
+        const data = await quotaRes.json().catch(() => ({}));
+        setError(data.error || t.common.error);
+      }
+
+      if (docsRes.ok) {
+        setDocuments((await docsRes.json()) as DocumentSummary[]);
+      }
+    } catch (err) {
+      console.error("Load failed:", err);
+      setError(t.common.error);
+    } finally {
+      setLoading(false);
+    }
+  }, [t.common.error]);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login?callbackUrl=/upload");
@@ -80,7 +100,7 @@ export default function UploadPage() {
     if (file) void uploadFile(file);
   }
 
-  if (status === "loading" || !quota) {
+  if (status === "loading" || (loading && !quota)) {
     return (
       <AppShell>
         <div className="flex justify-center py-24">
@@ -90,7 +110,17 @@ export default function UploadPage() {
     );
   }
 
-  const disabled = uploading || !quota.canUpload;
+  // Fallback for quota failure to allow rendering the error message
+  const displayQuota = quota || {
+    canUpload: false,
+    uploadsToday: 0,
+    maxUploads: 0,
+    uploadsRemaining: 0,
+    maxFileSizeMb: 0,
+    tier: "starter_free" as const,
+  };
+
+  const disabled = uploading || !displayQuota.canUpload;
 
   return (
     <AppShell>
@@ -101,6 +131,12 @@ export default function UploadPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="lg:col-span-2">
+          {error && (
+            <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          )}
+          
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -137,7 +173,7 @@ export default function UploadPage() {
                   </button>
                 </p>
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  {t.upload.maxSize}: {quota.maxFileSizeMb}MB · PDF, DOCX, TXT
+                  {t.upload.maxSize}: {displayQuota.maxFileSizeMb}MB · PDF, DOCX, TXT
                 </p>
               </>
             )}
@@ -150,7 +186,7 @@ export default function UploadPage() {
             />
           </div>
 
-          {!quota.canUpload && (
+          {!displayQuota.canUpload && quota && (
             <div className="card-muted mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm">{t.upload.limitReached}</p>
               <Link href="/pricing" className="btn-primary">
@@ -159,11 +195,6 @@ export default function UploadPage() {
             </div>
           )}
 
-          {error && (
-            <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          )}
           {message && (
             <p className="mt-4 flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-4 w-4" aria-hidden />
@@ -172,7 +203,7 @@ export default function UploadPage() {
           )}
         </section>
 
-        <UploadQuotaCard quota={quota} />
+        <UploadQuotaCard quota={displayQuota} />
       </div>
 
       <section className="mt-8">
