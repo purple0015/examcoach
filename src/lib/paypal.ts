@@ -2,8 +2,8 @@ import { SubscriptionTier } from "@/types";
 
 const PAYPAL_API =
   process.env.PAYPAL_ENV === "live"
-    ? "https://api-m.sandbox.paypal.com"
-    : "https://api-m.paypal.com";
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
 
 const PLAN_ENV_KEYS: Record<Exclude<SubscriptionTier, "free_trial" | "starter_free">, string> = {
   pro_scholar: "PAYPAL_PLAN_PRO_SCHOLAR",
