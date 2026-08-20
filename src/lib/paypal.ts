@@ -1,9 +1,9 @@
 import { SubscriptionTier } from "@/types";
 
 const PAYPAL_API =
-  process.env.PAYPAL_ENV === "sandbox"
-    ? "https://api-m.sandbox.paypal.com"
-    : "https://api-m.paypal.com";
+  process.env.PAYPAL_ENV === "live"
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
 
 const PLAN_ENV_KEYS: Record<Exclude<SubscriptionTier, "free_trial" | "starter_free">, string> = {
   pro_scholar: "PAYPAL_PLAN_PRO_SCHOLAR",
@@ -60,7 +60,7 @@ export async function createPayPalProduct() {
       name: "ExamCoach Subscription",
       description: "Access to ExamCoach study methods and AI tools",
       type: "SERVICE",
-      category: "EDUCATIONAL_SERVICES",
+      category: "EDUCATIONAL_AND_TEXTBOOKS",
       image_url: "https://examcoach-rorw.onrender.com/icons/icon-192x192.png",
       home_url: "https://examcoach-rorw.onrender.com",
     }),
@@ -93,7 +93,6 @@ export async function createPayPalPlan(productId: string, tierName: string, amou
           sequence: 1,
           total_cycles: 0,
           pricing_scheme: {
-            pricing_model: "FIXED",
             fixed_price: {
               value: amount.toFixed(2),
               currency_code: "USD",
