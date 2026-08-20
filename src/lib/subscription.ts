@@ -84,6 +84,9 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
         maxFileSizeMb: org.maxFileSizeMb,
         mockExamQuestions: org.maxMockExamQuestions,
         groqTokenLimit: org.groqTokensLimit,
+        flashcardsPerBatch: 50,
+        aiRequestsPerDay: 1000,
+        hasPriorityInference: true,
       },
       studyMethods: [
         "flashcards", "active_recall", "pomodoro", "feynman", "spaced_repetition", 
@@ -140,6 +143,9 @@ export async function getUploadQuota(userId: string): Promise<UploadQuota> {
       maxFileSizeMb: user.organization.maxFileSizeMb,
       mockExamQuestions: user.organization.maxMockExamQuestions,
       groqTokenLimit: user.organization.groqTokensLimit,
+      flashcardsPerBatch: 50,
+      aiRequestsPerDay: 1000,
+      hasPriorityInference: true,
     };
   } else {
     tier = await getUserTier(userId);
@@ -177,6 +183,9 @@ export async function reserveUploadSlot(userId: string): Promise<UploadQuota> {
       maxFileSizeMb: user.organization.maxFileSizeMb,
       mockExamQuestions: user.organization.maxMockExamQuestions,
       groqTokenLimit: user.organization.groqTokensLimit,
+      flashcardsPerBatch: 50,
+      aiRequestsPerDay: 1000,
+      hasPriorityInference: true,
     };
   } else {
     tier = await getUserTier(userId);
