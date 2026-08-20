@@ -83,7 +83,7 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
         dailyUploads: org.dailyUploadsLimit,
         maxFileSizeMb: org.maxFileSizeMb,
         mockExamQuestions: org.maxMockExamQuestions,
-        groqTokensLimit: org.groqTokensLimit,
+        groqTokenLimit: org.groqTokensLimit,
         priorityAiProcessing: org.priorityAiProcessing,
       },
       studyMethods: [
