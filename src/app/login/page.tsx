@@ -101,7 +101,7 @@ export default function LoginPage() {
               <label htmlFor="password" className="text-sm font-medium">
                 {t.auth.password}
               </label>
-              <Link href="/login/forgot-password" size="sm" className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline">
+              <Link href="/login/forgot-password" className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline">
                 Forgot password?
               </Link>
             </div>
