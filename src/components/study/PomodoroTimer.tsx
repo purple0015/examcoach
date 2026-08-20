@@ -67,7 +67,7 @@ export function PomodoroTimer() {
           {t.common.retry}
         </button>
       </div>
-      <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-4 text-sm text-brand-text-secondary dark:text-slate-400">
         {completed} × {t.study.methods.pomodoro.name}
       </p>
     </div>

@@ -7,7 +7,7 @@ export function LegalFooter() {
   const { t } = useI18n();
 
   return (
-    <footer className="mt-auto border-t border-slate-200 py-6 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+    <footer className="mt-auto border-t border-surface-border py-6 text-sm text-brand-text-secondary dark:border-slate-800 dark:text-slate-400">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 sm:flex-row sm:justify-between">
         <p>
           © {new Date().getFullYear()} Axiom Neural Systems by Silethemba. {t.footer.rights}

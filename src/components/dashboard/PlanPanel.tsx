@@ -103,7 +103,7 @@ export function PlanPanel({
         </span>
         <div className="flex-1">
           <h2 className="font-semibold">{variant.title}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{variant.body}</p>
+          <p className="text-sm text-brand-text-secondary dark:text-slate-400">{variant.body}</p>
         </div>
         {subscription.isTrial && (
           <Link href="/pricing" className="btn-primary shrink-0">

@@ -41,7 +41,7 @@ export default function LoginPage() {
     <AppShell width="narrow">
       <div className="card">
         <h1 className="text-2xl font-bold">{t.auth.loginTitle}</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.auth.loginSubtitle}</p>
+        <p className="mt-1 text-sm text-brand-text-secondary dark:text-slate-400">{t.auth.loginSubtitle}</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
@@ -92,7 +92,7 @@ export default function LoginPage() {
           {t.auth.googleContinue}
         </button>
 
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-6 text-center text-sm text-brand-text-secondary dark:text-slate-400">
           {t.auth.noAccount}{" "}
           <Link href="/signup" className="font-medium text-primary-600 dark:text-primary-400">
             {t.common.signup}

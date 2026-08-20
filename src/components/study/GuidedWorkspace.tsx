@@ -27,7 +27,7 @@ export function GuidedWorkspace({ method }: { method: StudyMethodId }) {
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
       />
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.study.notesLocal}</p>
+      <p className="mt-2 text-xs text-brand-text-secondary dark:text-slate-400">{t.study.notesLocal}</p>
     </div>
   );
 }

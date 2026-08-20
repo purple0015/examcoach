@@ -10,9 +10,9 @@ const outDir = path.join(__dirname, "..", "public", "icons");
 
 if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-// Minimal valid 1x1 indigo PNG (base64) — browsers scale via manifest sizes
+// Minimal valid 1x1 warm orange PNG (base64) — browsers scale via manifest sizes
 const PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/BfAAQEAf8H+QdKsgAAAABJRU5ErkJggg==";
 
 const buffer = Buffer.from(PNG_BASE64, "base64");
 

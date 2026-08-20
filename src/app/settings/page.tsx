@@ -35,7 +35,7 @@ export default function SettingsPage() {
 
         <div className="mt-4">
           <p className="text-sm font-medium">{t.common.language}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t.settings.languageDesc}</p>
+          <p className="text-xs text-brand-text-secondary dark:text-slate-400">{t.settings.languageDesc}</p>
           <div className="mt-3">
             <LanguageSwitcher variant="full" />
           </div>
@@ -43,7 +43,7 @@ export default function SettingsPage() {
 
         <div className="mt-6">
           <p className="text-sm font-medium">{t.common.theme}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t.settings.themeDesc}</p>
+          <p className="text-xs text-brand-text-secondary dark:text-slate-400">{t.settings.themeDesc}</p>
           <div className="mt-3">
             <ThemeToggle variant="full" />
           </div>
@@ -52,7 +52,7 @@ export default function SettingsPage() {
 
       <section className="card mt-4">
         <h2 className="font-semibold">{t.settings.account}</h2>
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-3 text-sm text-brand-text-secondary dark:text-slate-400">
           {t.settings.signedInAs} <span className="font-medium">{session?.user?.email}</span>
         </p>
         {subscription && (
@@ -61,7 +61,7 @@ export default function SettingsPage() {
               {t.settings.plan}:{" "}
               <span className="font-semibold">{getPlanByTier(subscription.tier).name}</span>
               {subscription.isTrial && (
-                <span className="ml-2 text-slate-500">
+                <span className="ml-2 text-brand-text-secondary">
                   {t.dashboard.trialEnds} {subscription.trialDaysLeft} {t.common.days}
                 </span>
               )}

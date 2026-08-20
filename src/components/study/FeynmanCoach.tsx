@@ -82,7 +82,7 @@ export function FeynmanCoach() {
           <p className="text-3xl font-bold">{result.score}%</p>
           <p className="mt-2 text-sm">{result.feedback}</p>
           {result.gaps.length > 0 && (
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-brand-text-primary dark:text-slate-300">
               {result.gaps.map((gap) => (
                 <li key={gap}>{gap}</li>
               ))}

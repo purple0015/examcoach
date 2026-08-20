@@ -4,8 +4,8 @@
   "description": "AI-powered flashcards, mock exams, and personalized syllabus tracking for smarter studying.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4F46E5",
+  "background_color": "#FAF9F6",
+  "theme_color": "#F28C38",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png" },

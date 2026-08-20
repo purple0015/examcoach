@@ -17,7 +17,7 @@ export default function LandingPage() {
 
   return (
     <AppShell>
-      <section className="rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-900 px-6 py-16 text-center text-white sm:px-12">
+      <section className="rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-950 px-6 py-16 text-center text-white sm:px-12">
         <span className="chip bg-white/15 text-white">{t.common.tagline}</span>
         <h1 className="mt-5 text-3xl font-bold sm:text-5xl">{t.landing.heroTitle}</h1>
         <p className="mx-auto mt-4 max-w-2xl text-base text-white/80 sm:text-lg">

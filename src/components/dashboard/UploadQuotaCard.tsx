@@ -18,14 +18,14 @@ export function UploadQuotaCard({ quota }: { quota: UploadQuota }) {
       </div>
       <p className="mt-2 text-3xl font-bold">
         {quota.uploadsRemaining}
-        <span className="ml-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <span className="ml-2 text-sm font-medium text-brand-text-secondary dark:text-slate-400">
           {t.dashboard.uploadsLeft}
         </span>
       </p>
       <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
         <div className="h-full rounded-full bg-primary-600 transition-all" style={{ width: `${used}%` }} />
       </div>
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-xs text-brand-text-secondary dark:text-slate-400">
         {quota.uploadsToday} {t.common.of} {quota.maxUploads} · {t.upload.maxSize}{" "}
         {quota.maxFileSizeMb}MB
       </p>

@@ -88,7 +88,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   if (cards.length === 0) {
     return (
       <div className="card">
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t.upload.noUploads}</p>
+        <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.noUploads}</p>
         {documents.length > 0 ? (
           <div className="mt-4 space-y-2">
             {documents.slice(0, 5).map((doc) => (
@@ -122,7 +122,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
 
   return (
     <div className="card">
-      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex items-center justify-between text-sm text-brand-text-secondary dark:text-slate-400">
         <span>
           {index + 1} {t.common.of} {cards.length}
         </span>
@@ -132,11 +132,11 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       <button
         type="button"
         onClick={() => setRevealed((r) => !r)}
-        className="mt-4 min-h-[180px] w-full rounded-2xl bg-slate-50 p-6 text-left dark:bg-slate-800/60"
+        className="mt-4 min-h-[180px] w-full rounded-2xl bg-surface-canvas p-6 text-left dark:bg-slate-800/60"
       >
         <p className="text-lg font-medium">{card.question}</p>
         {revealed && (
-          <p className="mt-4 border-t border-slate-200 pt-4 text-slate-600 dark:border-slate-700 dark:text-slate-300">
+          <p className="mt-4 border-t border-surface-border pt-4 text-brand-text-primary dark:border-slate-700 dark:text-slate-300">
             {card.answer}
           </p>
         )}

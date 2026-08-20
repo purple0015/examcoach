@@ -53,7 +53,7 @@ export default function AdminPage() {
     <AppShell>
       <header className="mb-6">
         <h1 className="text-2xl font-bold sm:text-3xl">{t.admin.title}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t.admin.subtitle}</p>
+        <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.admin.subtitle}</p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -87,13 +87,13 @@ export default function AdminPage() {
       <section className="card mt-4">
         <h2 className="font-semibold">{t.admin.recentSignups}</h2>
         {stats.recentSignups.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{t.admin.noUsers}</p>
+          <p className="mt-3 text-sm text-brand-text-secondary dark:text-slate-400">{t.admin.noUsers}</p>
         ) : (
           <ul className="mt-3 divide-y divide-slate-200 text-sm dark:divide-slate-800">
             {stats.recentSignups.map((user) => (
               <li key={user.id} className="flex items-center justify-between py-2">
                 <span>{user.name ?? user.email}</span>
-                <span className="text-slate-500 dark:text-slate-400">
+                <span className="text-brand-text-secondary dark:text-slate-400">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </span>
               </li>

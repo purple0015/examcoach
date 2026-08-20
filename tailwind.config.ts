@@ -7,33 +7,41 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          200: "#c7d2fe",
-          300: "#a5b4fc",
-          400: "#818cf8",
-          500: "#6366f1",
-          600: "#4f46e5",
-          700: "#4338ca",
-          800: "#3730a3",
-          900: "#312e81",
-          950: "#1e1b4b",
+          50: "#fff7ed",
+          100: "#ffedd5",
+          200: "#fed7aa",
+          300: "#fdba74",
+          400: "#fb923c",
+          500: "#F28C38",
+          600: "#E57E25",
+          700: "#c2410c",
+          800: "#9a3412",
+          900: "#7c2d12",
+          950: "#431407",
         },
         accent: {
           50: "#fff7ed",
           100: "#ffedd5",
           400: "#fb923c",
-          500: "#f97316",
-          600: "#ea580c",
+          500: "#F28C38",
+          600: "#E57E25",
         },
         success: { 50: "#ecfdf5", 100: "#d1fae5", 500: "#10b981", 600: "#059669" },
         warning: { 50: "#fffbeb", 100: "#fef3c7", 500: "#f59e0b", 600: "#d97706" },
         danger: { 50: "#fef2f2", 100: "#fee2e2", 500: "#ef4444", 600: "#dc2626" },
         surface: {
+          canvas: "#FAF9F6",
+          border: "#E5E5E5",
           light: "#ffffff",
           dark: "#0f172a",
           "dark-elevated": "#1e293b",
         },
+        brand: {
+          text: {
+            primary: "#1A1A1A",
+            secondary: "#6E6E6E",
+          }
+        }
       },
       boxShadow: {
         card: "0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -12px rgba(15, 23, 42, 0.18)",
