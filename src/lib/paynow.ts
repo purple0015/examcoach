@@ -8,14 +8,47 @@ export interface PaynowPayment {
 }
 
 /**
- * Generates a SHA512 hash for Paynow integration
+ * Generates a SHA512 hash for Paynow integration.
+ * Paynow requires fields to be concatenated in a specific order, NOT alphabetical.
  */
 export function generatePaynowHash(data: Record<string, string>, integrationKey: string): string {
-  const values = Object.keys(data)
-    .filter(key => key !== 'hash')
-    .sort()
-    .map((key) => data[key])
-    .join("");
+  // Define the expected field order for different scenarios
+  const initiationFields = ["resulturl", "returnurl", "reference", "amount", "id", "additionalinfo", "authemail", "tokenize", "status"];
+  const responseFields = ["reference", "amount", "paynowreference", "status", "pollurl"];
+  const initiateResponseFields = ["status", "browserurl", "pollurl"];
+
+  let values = "";
+  
+  // Determine which field set to use based on the presence of keys
+  if (data.resulturl || data.returnurl) {
+    // Initiation Request
+    initiationFields.forEach(field => {
+      if (data[field] !== undefined) {
+        values += data[field];
+      }
+    });
+  } else if (data.paynowreference) {
+    // Status/Poll/Webhook Response
+    responseFields.forEach(field => {
+      if (data[field] !== undefined) {
+        values += data[field];
+      }
+    });
+  } else if (data.browserurl && data.pollurl) {
+    // Initiate Response (from Paynow to us)
+    initiateResponseFields.forEach(field => {
+      if (data[field] !== undefined) {
+        values += data[field];
+      }
+    });
+  } else {
+    // Fallback: use keys in provided order (excluding hash)
+    Object.keys(data).forEach(key => {
+      if (key !== 'hash') {
+        values += data[key];
+      }
+    });
+  }
   
   return crypto
     .createHash("sha512")
@@ -45,6 +78,7 @@ export async function initiatePaynowPayment(payment: PaynowPayment) {
     id: integrationId,
     additionalinfo: payment.items ?? "ExamCoach Subscription",
     authemail: payment.email,
+    tokenize: "False", // Default to False
     status: "Message",
   };
 
@@ -61,15 +95,24 @@ export async function initiatePaynowPayment(payment: PaynowPayment) {
 
   const responseText = await response.text();
   const params = new URLSearchParams(responseText);
+  const responseData: Record<string, string> = {};
+  params.forEach((value, key) => {
+    responseData[key] = value;
+  });
 
-  if (params.get("status")?.toLowerCase() === "error") {
-    throw new Error(params.get("error") || "Paynow initiation failed");
+  if (responseData.status?.toLowerCase() === "error") {
+    throw new Error(responseData.error || "Paynow initiation failed");
+  }
+
+  // Verify response hash
+  if (!verifyPaynowHash(responseData, integrationKey)) {
+    throw new Error("Invalid hash from Paynow initiation response");
   }
 
   return {
-    browserUrl: params.get("browserurl"),
-    pollUrl: params.get("pollurl"),
-    hash: params.get("hash"),
+    browserUrl: responseData.browserurl,
+    pollUrl: responseData.pollurl,
+    hash: responseData.hash,
   };
 }
 
