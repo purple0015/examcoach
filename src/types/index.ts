@@ -133,6 +133,28 @@ export interface AdminStats {
   recentSignups: { id: string; name: string | null; email: string; createdAt: string }[];
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  prefix: string;
+  colors?: { primary: string; accent: string };
+  limits?: TierLimits;
+  createdAt: string;
+}
+
+export interface OrgID {
+  id: string;
+  code: string;
+  tempPassword?: string;
+  isClaimed: boolean;
+  status: "trial" | "paid";
+  trialEndsAt?: string;
+  orgId: string;
+  userId?: string;
+  createdAt: string;
+}
+
 export interface DocumentSummary {
   id: string;
   filename: string;

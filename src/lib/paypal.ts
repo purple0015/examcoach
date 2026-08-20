@@ -39,9 +39,81 @@ async function getAccessToken(): Promise<string> {
     cache: "no-store",
   });
 
-  if (!res.ok) throw new Error(`PayPal auth failed (${res.status})`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    const env = process.env.PAYPAL_ENV === "sandbox" ? "SANDBOX" : "LIVE";
+    throw new Error(`PayPal auth failed (Status: ${res.status}, Env: ${env}). Please check your Client ID and Secret. Details: ${errorText}`);
+  }
   const data = (await res.json()) as { access_token: string };
   return data.access_token;
+}
+
+export async function createPayPalProduct() {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v1/catalogs/products`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: "ExamCoach Subscription",
+      description: "Access to ExamCoach study methods and AI tools",
+      type: "SERVICE",
+      category: "EDUCATIONAL_AND_TEXTBOOKS",
+      image_url: "https://examcoach-rorw.onrender.com/icons/icon-192x192.png",
+      home_url: "https://examcoach-rorw.onrender.com",
+    }),
+  });
+
+  if (!res.ok) throw new Error("Failed to create PayPal product");
+  return (await res.json()) as { id: string };
+}
+
+export async function createPayPalPlan(productId: string, tierName: string, amount: number) {
+  const token = await getAccessToken();
+  const res = await fetch(`${PAYPAL_API}/v1/billing/plans`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      name: `ExamCoach ${tierName}`,
+      description: `Monthly subscription for ExamCoach ${tierName}`,
+      status: "ACTIVE",
+      billing_cycles: [
+        {
+          frequency: {
+            interval_unit: "MONTH",
+            interval_count: 1,
+          },
+          tenure_type: "REGULAR",
+          sequence: 1,
+          total_cycles: 0,
+          pricing_scheme: {
+            fixed_price: {
+              value: amount.toFixed(2),
+              currency_code: "USD",
+            },
+          },
+        },
+      ],
+      payment_preferences: {
+        auto_bill_outstanding: true,
+        setup_fee: {
+          value: "0",
+          currency_code: "USD",
+        },
+        setup_fee_failure_action: "CONTINUE",
+        payment_failure_threshold: 3,
+      },
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Failed to create PayPal plan for ${tierName}: ${await res.text()}`);
+  return (await res.json()) as { id: string };
 }
 
 export interface PayPalSubscriptionResponse {

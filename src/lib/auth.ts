@@ -9,17 +9,30 @@ import { Locale } from "@/types";
 
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
-    name: "Email",
+    name: "Credentials",
     credentials: {
-      email: { label: "Email", type: "email" },
+      identifier: { label: "Email or ID", type: "text" },
       password: { label: "Password", type: "password" },
+      type: { label: "Type", type: "text" }, // "email" | "id"
     },
     async authorize(credentials) {
-      if (!credentials?.email || !credentials?.password) return null;
+      if (!credentials?.identifier || !credentials?.password) return null;
 
       try {
+        if (credentials.type === "id") {
+          const user = await prisma.user.findUnique({
+            where: { orgIdCode: credentials.identifier.toUpperCase() },
+          });
+          if (!user?.password) return null;
+
+          const valid = await bcrypt.compare(credentials.password, user.password);
+          if (!valid) return null;
+
+          return { id: user.id, name: user.name, email: user.email, image: user.image };
+        }
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase() },
+          where: { email: credentials.identifier.toLowerCase() },
         });
         if (!user?.password) return null;
 
@@ -59,7 +72,16 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { role: true, locale: true, email: true },
+            select: { 
+              role: true, 
+              locale: true, 
+              email: true, 
+              orgId: true, 
+              orgIdCode: true,
+              organization: {
+                select: { colors: true }
+              }
+            },
           });
           if (dbUser) {
             const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
@@ -70,6 +92,20 @@ export const authOptions: NextAuthOptions = {
             }
             token.role = shouldBeAdmin ? "admin" : dbUser.role;
             token.locale = isLocale(dbUser.locale) ? dbUser.locale : DEFAULT_LOCALE;
+            token.orgId = dbUser.orgId;
+            token.orgIdCode = dbUser.orgIdCode;
+            token.orgColors = dbUser.organization?.colors as any;
+
+            if (dbUser.orgIdCode) {
+              const orgIdRecord = await prisma.orgID.findUnique({
+                where: { code: dbUser.orgIdCode },
+                select: { status: true, trialEndsAt: true }
+              });
+              if (orgIdRecord) {
+                token.orgStatus = orgIdRecord.status as any;
+                token.trialEndsAt = orgIdRecord.trialEndsAt?.toISOString();
+              }
+            }
           }
         } catch (error) {
           console.error("JWT callback error:", error);
@@ -83,6 +119,11 @@ export const authOptions: NextAuthOptions = {
           session.user.id = token.sub;
           session.user.role = (token.role as string) ?? "user";
           session.user.locale = (token.locale as Locale) ?? DEFAULT_LOCALE;
+          session.user.orgId = token.orgId as string | null;
+          session.user.orgIdCode = token.orgIdCode as string | null;
+          session.user.orgColors = token.orgColors as any;
+          session.user.orgStatus = token.orgStatus as any;
+          session.user.trialEndsAt = token.trialEndsAt as string | null;
         }
       } catch (error) {
         console.error("Session callback error:", error);

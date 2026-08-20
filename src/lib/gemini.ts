@@ -125,6 +125,56 @@ ${explanation.slice(0, 8000)}
   };
 }
 
+export async function studyCoach(
+  methodId: string,
+  content: string,
+  topic?: string,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<{ score: number; gaps: string[]; feedback: string; nextStep: string }> {
+  const methodNames: Record<string, string> = {
+    active_recall: "Active Recall",
+    cornell_notes: "Cornell Notes",
+    blurting: "Blurting Technique",
+    mind_map: "Mind Mapping",
+    interleaving: "Interleaving Study",
+    exam_blueprint: "Exam Blueprinting",
+    peer_teaching: "Peer Teaching",
+  };
+
+  const methodName = methodNames[methodId] || "Study Workspace";
+  const topicContext = topic ? ` on the topic of "${topic}"` : "";
+
+  const prompt = `You are a learning science expert. A student is using the ${methodName} technique${topicContext}.
+Review their provided notes/explanation below and provide coaching feedback.
+
+${languageInstruction(locale)}
+
+Return JSON: {"score": number (0-100), "gaps": string[], "feedback": string, "nextStep": string}
+- score: reflect how effectively they used the technique and how complete their understanding appears.
+- gaps: list specific areas or details missing from their notes.
+- feedback: a supportive, academic critique of their work.
+- nextStep: a specific task to improve their mastery.
+
+STUDENT CONTENT:
+"""
+${content.slice(0, 10000)}
+"""`;
+
+  const parsed = await generateJson<{
+    score?: number;
+    gaps?: string[];
+    feedback?: string;
+    nextStep?: string;
+  }>(prompt);
+
+  return {
+    score: Math.max(0, Math.min(100, Math.round(parsed.score ?? 0))),
+    gaps: parsed.gaps ?? [],
+    feedback: parsed.feedback ?? "",
+    nextStep: parsed.nextStep ?? "",
+  };
+}
+
 export function isGeminiConfigured(): boolean {
   return !!process.env.GEMINI_API_KEY;
 }
