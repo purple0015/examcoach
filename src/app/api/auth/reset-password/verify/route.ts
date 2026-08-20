@@ -9,23 +9,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const resetRecord = await prisma.passwordResetCode.findFirst({
-      where: { email: email.toLowerCase(), code, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: "desc" },
+    const user = await prisma.user.findFirst({
+      where: { 
+        email: email.toLowerCase(), 
+        resetCode: code, 
+        resetCodeExpiresAt: { gt: new Date() } 
+      },
     });
 
-    if (!resetRecord) {
+    if (!user) {
       return NextResponse.json({ error: "Invalid or expired verification code" }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
-      where: { email: email.toLowerCase() },
-      data: { password: hashedPassword },
+      where: { id: user.id },
+      data: { 
+        password: hashedPassword,
+        resetCode: null,
+        resetCodeExpiresAt: null
+      },
     });
-
-    // Delete the code after successful use
-    await prisma.passwordResetCode.deleteMany({ where: { email: email.toLowerCase() } });
 
     return NextResponse.json({ success: true, message: "Password updated successfully." });
   } catch (error) {

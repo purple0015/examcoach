@@ -19,6 +19,8 @@ model User {
   theme         String    @default("system") // "light" | "dark" | "system"
   orgId         String?
   orgIdCode     String?   @unique
+  resetCode     String?
+  resetCodeExpiresAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -41,7 +43,16 @@ model Organization {
   slug      String   @unique
   prefix    String   @unique // e.g., "GR"
   colors    Json?    // { primary: string, accent: string }
-  limits    Json?    // { dailyUploads: number, ... }
+  
+  // Resource Limits
+  dailyUploadsLimit    Int     @default(1000)
+  studyMethodsCount    Int     @default(14)
+  maxFileSizeMb        Int     @default(100)
+  maxMockExamQuestions Int     @default(100)
+  groqTokensLimit      Int     @default(5000000)
+  seatLimit            Int     @default(100)
+  priorityAiProcessing Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -64,15 +75,7 @@ model OrgID {
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
-model PasswordResetCode {
-  id        String   @id @default(cuid())
-  email     String
-  code      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([email, code])
-}
+// Removed PasswordResetCode model as it's now in User
 
 model Payment {
   id            String   @id @default(cuid())

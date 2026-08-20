@@ -43,7 +43,11 @@ export async function getUserTier(userId: string): Promise<SubscriptionTier> {
 export async function getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { 
+      email: true,
+      orgId: true,
+      organization: true
+    },
   });
 
   // Admin bypass
@@ -59,6 +63,34 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
       maxSeats: plan.maxSeats,
       limits: plan.limits,
       studyMethods: plan.studyMethods,
+      dashboard: plan.dashboard,
+    };
+  }
+
+  // Organization override
+  if (user?.orgId && user.organization) {
+    const org = user.organization;
+    const plan = getPlanByTier("pro_scholar"); // Default base for org users
+    return {
+      tier: "pro_scholar",
+      status: "active",
+      isTrial: false,
+      trialDaysLeft: 0,
+      currentPeriodEnd: null,
+      seats: 1,
+      maxSeats: org.seatLimit,
+      limits: {
+        dailyUploads: org.dailyUploadsLimit,
+        maxFileSizeMb: org.maxFileSizeMb,
+        maxMockExamQuestions: org.maxMockExamQuestions,
+        groqTokensLimit: org.groqTokensLimit,
+        priorityAiProcessing: org.priorityAiProcessing,
+      },
+      studyMethods: [
+        "flashcards", "active_recall", "pomodoro", "feynman", "spaced_repetition", 
+        "mock_exam", "cornell_notes", "blurting", "mind_map", "interleaving", 
+        "past_paper_drill", "exam_blueprint", "peer_teaching", "cohort_analytics"
+      ],
       dashboard: plan.dashboard,
     };
   }
@@ -94,8 +126,28 @@ async function uploadsToday(userId: string): Promise<number> {
 }
 
 export async function getUploadQuota(userId: string): Promise<UploadQuota> {
-  const tier = await getUserTier(userId);
-  const limits: TierLimits = getTierLimits(tier);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { organization: true }
+  });
+
+  let limits: TierLimits;
+  let tier: SubscriptionTier;
+
+  if (user?.orgId && user.organization) {
+    tier = "pro_scholar";
+    limits = {
+      dailyUploads: user.organization.dailyUploadsLimit,
+      maxFileSizeMb: user.organization.maxFileSizeMb,
+      maxMockExamQuestions: user.organization.maxMockExamQuestions,
+      groqTokensLimit: user.organization.groqTokensLimit,
+      priorityAiProcessing: user.organization.priorityAiProcessing,
+    };
+  } else {
+    tier = await getUserTier(userId);
+    limits = getTierLimits(tier);
+  }
+
   const used = await uploadsToday(userId);
 
   return {
@@ -109,13 +161,31 @@ export async function getUploadQuota(userId: string): Promise<UploadQuota> {
 }
 
 /**
- * Claims one upload slot for today. The counter is incremented first so that
- * concurrent requests cannot both pass a read-then-write quota check; the slot
- * is released again when the increment pushed the user past their plan limit.
+ * Claims one upload slot for today.
  */
 export async function reserveUploadSlot(userId: string): Promise<UploadQuota> {
-  const tier = await getUserTier(userId);
-  const limits: TierLimits = getTierLimits(tier);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { organization: true }
+  });
+
+  let limits: TierLimits;
+  let tier: SubscriptionTier;
+
+  if (user?.orgId && user.organization) {
+    tier = "pro_scholar";
+    limits = {
+      dailyUploads: user.organization.dailyUploadsLimit,
+      maxFileSizeMb: user.organization.maxFileSizeMb,
+      maxMockExamQuestions: user.organization.maxMockExamQuestions,
+      groqTokensLimit: user.organization.groqTokensLimit,
+      priorityAiProcessing: user.organization.priorityAiProcessing,
+    };
+  } else {
+    tier = await getUserTier(userId);
+    limits = getTierLimits(tier);
+  }
+
   const date = startOfUtcDay();
 
   const record = await prisma.dailyUpload.upsert({

@@ -60,11 +60,38 @@ export async function GET(req: NextRequest) {
       where: orgId ? { orgId } : {},
       include: {
         organization: { select: { name: true } },
+        // user: { select: { email: true, name: true } } // Added if needed
       },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(ids);
   } catch (error) {
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const { ids, status } = await req.json();
+    if (!ids || !Array.isArray(ids) || !status) {
+      return NextResponse.json({ error: "Missing ids or status" }, { status: 400 });
+    }
+
+    const trialEndsAt = status === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null;
+
+    await prisma.orgID.updateMany({
+      where: { id: { in: ids } },
+      data: { status, trialEndsAt },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Batch update error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

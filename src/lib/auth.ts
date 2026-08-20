@@ -19,28 +19,39 @@ const providers: NextAuthOptions["providers"] = [
       if (!credentials?.identifier || !credentials?.password) return null;
 
       try {
+        let user;
         if (credentials.type === "id") {
-          const user = await prisma.user.findUnique({
+          user = await prisma.user.findUnique({
             where: { orgIdCode: credentials.identifier.toUpperCase() },
           });
-          if (!user?.password) return null;
-
-          const valid = await bcrypt.compare(credentials.password, user.password);
-          if (!valid) return null;
-
-          return { id: user.id, name: user.name, email: user.email, image: user.image };
+        } else {
+          user = await prisma.user.findUnique({
+            where: { email: credentials.identifier.toLowerCase() },
+          });
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.identifier.toLowerCase() },
-        });
         if (!user?.password) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) return null;
 
+        // Trial Expiration Check for Org Users
+        if (user.orgIdCode) {
+          const orgIdRecord = await prisma.orgID.findUnique({
+            where: { code: user.orgIdCode },
+          });
+          
+          if (orgIdRecord && orgIdRecord.status === "trial") {
+            const now = new Date();
+            if (orgIdRecord.trialEndsAt && now > orgIdRecord.trialEndsAt) {
+              throw new Error("TRIAL_EXPIRED");
+            }
+          }
+        }
+
         return { id: user.id, name: user.name, email: user.email, image: user.image };
-      } catch (error) {
+      } catch (error: any) {
+        if (error.message === "TRIAL_EXPIRED") throw error;
         console.error("Authorize error:", error);
         return null;
       }

@@ -31,13 +31,21 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, slug, prefix, colors, limits } = await req.json();
-    if (!name || !slug || !prefix) {
+    const { name, slug, prefix, colors, ...limits } = await req.json();
+    if (!name || !slug) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const finalPrefix = (prefix || name.trim().slice(0, 2)).toUpperCase();
+
     const org = await prisma.organization.create({
-      data: { name, slug, prefix, colors, limits },
+      data: { 
+        name, 
+        slug, 
+        prefix: finalPrefix, 
+        colors,
+        ...limits // Spread the specific limit fields if they match the schema
+      },
     });
     return NextResponse.json(org);
   } catch (error) {

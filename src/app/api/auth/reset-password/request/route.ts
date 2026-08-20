@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    await prisma.passwordResetCode.create({
-      data: { email: email.toLowerCase(), code, expiresAt },
+    await prisma.user.update({
+      where: { email: email.toLowerCase() },
+      data: { resetCode: code, resetCodeExpiresAt: expiresAt },
     });
 
     // In a real app, send this via email. For now, we log it.
