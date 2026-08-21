@@ -28,23 +28,35 @@ export async function POST(req: Request) {
   const resolvedTopic = topic || doc.topics[0] || "General";
   const count = getTierLimits(tier).flashcardsPerBatch;
 
-  // FIX: Provide the actual document text to the AI instead of just the filename.
-  // NOTE: Change 'doc.content' to whatever field in your Prisma schema holds the extracted text (e.g., doc.text)
-  const documentContext = doc.content || doc.text || doc.filename;
+  // Dynamically fetch file content from fileUrl to fix TypeScript type error and give AI full text
+  let documentContext = doc.filename;
+  if (doc.fileUrl) {
+    try {
+      const fileRes = await fetch(doc.fileUrl);
+      if (fileRes.ok) {
+        const fetchedText = await fileRes.text();
+        if (fetchedText && fetchedText.trim().length > 0) {
+          documentContext = fetchedText;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch file content from fileUrl:", err);
+    }
+  }
 
   try {
     let cards;
     if (isGroqConfigured()) {
       cards = await generateFlashcardsGroq(
         resolvedTopic,
-        documentContext, // <-- Passes the full text to Groq
+        documentContext,
         count,
         session.user.locale
       );
     } else {
       cards = await generateFlashcards(
         resolvedTopic,
-        documentContext, // <-- Passes the full text to Gemini
+        documentContext,
         count,
         session.user.locale
       );
