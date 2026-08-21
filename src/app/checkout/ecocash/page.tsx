@@ -139,7 +139,7 @@ function EcoCashCheckoutContent() {
                 <Info size={20} className="text-primary-500" /> Instructions
               </h2>
               <ol className="mt-4 list-decimal space-y-3 pl-4 text-sm text-brand-text-secondary">
-                <li>Dial <span className="font-bold text-brand-text-primary">*151#</span> on your EcoCash line and select <span className="font-bold text-brand-text-primary">'Send Money'</span> (or dial <span className="font-bold text-brand-text-primary">*151*1*1*0775993734*{plan.price}#</span>).</li>
+                <li>Dial <span className="font-bold text-brand-text-primary">*151#</span> on your EcoCash line and select <span className="font-bold text-brand-text-primary">&apos;Send Money&apos;</span> (or dial <span className="font-bold text-brand-text-primary">*151*1*1*0775993734*{plan.price}#</span>).</li>
                 <li>Enter recipient number <span className="font-bold text-brand-text-primary">0775993734</span> and the required amount.</li>
                 <li>Verify recipient name appears as <span className="font-bold text-brand-text-primary">Sibonginkosi Moyo</span> and enter your PIN to authorize.</li>
                 <li>Wait for the EcoCash confirmation SMS with the <span className="font-bold text-brand-text-primary">Transaction Reference Code</span>.</li>

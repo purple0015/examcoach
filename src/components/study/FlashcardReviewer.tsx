@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, RefreshCw } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { DocumentSummary, FlashcardItem } from "@/types";
@@ -44,14 +44,21 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaced]);
 
-  async function generate(documentId: string, topic?: string) {
+  async function generate(documentId: string, topic?: string, reset = false) {
     setGenerating(true);
     setError("");
+    
+    // UI Reset immediately if resetting
+    if (reset) {
+      setIndex(0);
+      setRevealed(false);
+    }
+
     try {
       const res = await fetch("/api/gemini/generate-flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, topic }),
+        body: JSON.stringify({ documentId, topic, reset }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -70,6 +77,16 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       setError(t.common.error);
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function refreshDocuments() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/documents");
+      if (res.ok) setDocuments((await res.json()) as DocumentSummary[]);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -96,7 +113,17 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   if (cards.length === 0) {
     return (
       <div className="card">
-        <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.noUploads}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.noUploads}</p>
+          <button 
+            onClick={() => void refreshDocuments()} 
+            disabled={loading}
+            className="flex items-center text-xs font-medium text-primary-600 hover:text-primary-700"
+          >
+            <RefreshCw size={14} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
         {documents.length > 0 ? (
           <div className="mt-4 space-y-2">
             {documents.slice(0, 5).map((doc) => (
@@ -162,7 +189,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
           onClick={() => {
             const currentCard = cards[index];
             if (currentCard?.documentId) {
-              void generate(currentCard.documentId, currentCard.topic);
+              void generate(currentCard.documentId, currentCard.topic, true);
             } else {
               setRevealed(false);
               setIndex(0);

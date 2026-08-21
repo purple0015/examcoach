@@ -1,5 +1,5 @@
 // @ts-ignore
-import pdf from "pdf-parse";
+const pdf = require("pdf-parse");
 
 /**
  * Utility to extract text from a file URL (e.g., Vercel Blob)

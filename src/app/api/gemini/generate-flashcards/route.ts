@@ -19,7 +19,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Flashcards are not available on your plan" }, { status: 403 });
   }
 
-  const { documentId, topic } = (await req.json()) as { documentId?: string; topic?: string };
+  const { documentId, topic, reset } = (await req.json()) as { 
+    documentId?: string; 
+    topic?: string; 
+    reset?: boolean 
+  };
   const doc = await prisma.document.findFirst({
     where: { id: documentId, userId: session.user.id },
   });
@@ -27,6 +31,17 @@ export async function POST(req: Request) {
   if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
   const resolvedTopic = topic || doc.topics[0] || "General";
+
+  if (reset) {
+    await prisma.flashcard.deleteMany({
+      where: {
+        userId: session.user.id,
+        documentId: doc.id,
+        topic: resolvedTopic,
+      },
+    });
+  }
+
   const count = getTierLimits(tier).flashcardsPerBatch;
 
   // Fetch document content using robust parser
