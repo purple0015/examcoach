@@ -12,6 +12,7 @@ import { FlashcardReviewer } from "@/components/study/FlashcardReviewer";
 import { FeynmanCoach } from "@/components/study/FeynmanCoach";
 import { PomodoroTimer } from "@/components/study/PomodoroTimer";
 import { MockExamRunner } from "@/components/study/MockExamRunner";
+import { QuizRunner } from "@/components/study/QuizRunner";
 import { GuidedWorkspace } from "@/components/study/GuidedWorkspace";
 import { SessionLogger } from "@/components/study/SessionLogger";
 import { WeaknessHeatmap } from "@/components/dashboard/WeaknessHeatmap";
@@ -90,6 +91,7 @@ export default function StudyMethodPage({ params }: { params: { method: string }
           {method.id === "pomodoro" && <PomodoroTimer />}
           {method.id === "mock_exam" && <MockExamRunner />}
           {method.id === "past_paper_drill" && <MockExamRunner pastPaperMode />}
+          {method.id === "quiz" && <QuizRunner />}
           {method.id === "cohort_analytics" && (
             <WeaknessHeatmap cells={stats?.weaknessMatrix ?? []} />
           )}
@@ -103,7 +105,9 @@ export default function StudyMethodPage({ params }: { params: { method: string }
             "peer_teaching",
           ].includes(method.id) && <GuidedWorkspace method={method.id} />}
 
-          <SessionLogger method={method.id} defaultMinutes={method.minutes} />
+          {method.id !== "quiz" && (
+            <SessionLogger method={method.id} defaultMinutes={method.minutes} />
+          )}
         </>
       )}
     </AppShell>
