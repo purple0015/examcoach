@@ -2,7 +2,7 @@ import Groq from "groq-sdk";
 import { Locale, MockExamQuestion } from "@/types";
 import { DEFAULT_LOCALE, LOCALE_AI_NAMES } from "@/lib/i18n/config";
 
-const MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const MODEL = process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
 
 function client(): Groq {
   const key = process.env.GROQ_API_KEY;
