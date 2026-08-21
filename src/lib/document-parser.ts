@@ -1,5 +1,6 @@
 // @ts-ignore
 const pdf = require("pdf-parse");
+const mammoth = require("mammoth");
 import fs from "fs";
 import path from "path";
 
@@ -7,6 +8,7 @@ import path from "path";
  * Strips common exam boilerplate to prevent AI from focusing on meta-data.
  */
 function sanitizeContent(text: string): string {
+  if (!text) return "";
   const lines = text.split("\n");
   const BOILERPLATE_PATTERNS = [
     "instructions to candidates",
@@ -31,6 +33,22 @@ function sanitizeContent(text: string): string {
 }
 
 /**
+ * Utility to extract text from a Buffer based on file extension/type
+ */
+async function extractTextFromBuffer(buffer: Buffer, filename: string): Promise<string> {
+  const ext = filename.toLowerCase();
+  if (ext.endsWith(".pdf")) {
+    const data = await pdf(buffer);
+    return data.text || "";
+  } else if (ext.endsWith(".docx")) {
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value || "";
+  } else {
+    return buffer.toString("utf-8");
+  }
+}
+
+/**
  * Utility to extract text from a file URL (Local vs Remote)
  */
 export async function getDocumentText(fileUrl: string, filename: string): Promise<string> {
@@ -45,26 +63,17 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
     } else {
       // Handle local:// or relative paths
       const relativePath = fileUrl.replace("local://", "");
-      // Look in process.cwd()/uploads as per requirement, or fallback to current dir if not prefixed
       const fullPath = path.isAbsolute(relativePath) 
         ? relativePath 
         : path.join(process.cwd(), "uploads", relativePath);
       
       if (!fs.existsSync(fullPath)) {
-        throw new Error(`Local file not found at ${fullPath}`);
+        throw new Error(`DOCUMENT_REUPLOAD_REQUIRED: Local file not found at ${fullPath}`);
       }
       buffer = fs.readFileSync(fullPath);
     }
 
-    let text = "";
-    if (filename.toLowerCase().endsWith(".pdf")) {
-      // @ts-ignore
-      const data = await pdf(buffer);
-      text = data.text || "";
-    } else {
-      text = buffer.toString("utf-8");
-    }
-
+    const text = await extractTextFromBuffer(buffer, filename);
     const sanitized = sanitizeContent(text);
     
     // Hallucination Guardrail: 50 character minimum
@@ -74,9 +83,10 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
 
     return sanitized;
   } catch (error: any) {
-    if (error.message === "INSUFFICIENT_TEXT") throw error;
+    if (error.message === "INSUFFICIENT_TEXT" || error.message.startsWith("DOCUMENT_REUPLOAD_REQUIRED")) {
+      throw error;
+    }
     console.error(`Document extraction error for ${filename}:`, error);
-    // Fallback to filename so something is returned if it's not a guardrail issue
     return filename;
   }
 }
@@ -86,18 +96,9 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
  */
 export async function getFileText(file: File): Promise<string> {
   try {
-    let text = "";
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-
-    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      // @ts-ignore
-      const data = await pdf(buffer);
-      text = data.text || "";
-    } else {
-      text = buffer.toString("utf-8");
-    }
-
+    const text = await extractTextFromBuffer(buffer, file.name);
     return sanitizeContent(text);
   } catch (error) {
     console.error(`File extraction error for ${file.name}:`, error);
