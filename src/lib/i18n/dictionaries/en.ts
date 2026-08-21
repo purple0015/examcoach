@@ -141,6 +141,12 @@ export const en = {
     noUploads: "Nothing uploaded yet.",
     upgradeForMore: "Upgrade for more uploads",
     topics: "Topics",
+    resetUploads: "Reset all uploads",
+    resetUploadsTitle: "Reset All Uploads?",
+    resetUploadsDesc: "This will permanently delete all your uploaded files and generated study materials. This action cannot be undone.",
+    resetUploadsWarning: "Note: This will NOT restore or reset your account's upload quota limit.",
+    resetUploadsConfirm: "Yes, Delete Everything",
+    resetUploadsSuccess: "All documents removed. Upload quota remains unchanged.",
   },
   study: {
     title: "Study methods",

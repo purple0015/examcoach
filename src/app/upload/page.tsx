@@ -1,10 +1,10 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { CheckCircle2, FileText, UploadCloud } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileText, Trash2, UploadCloud, X } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -20,6 +20,8 @@ export default function UploadPage() {
   const [quota, setQuota] = useState<UploadQuota | null>(null);
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -68,6 +70,31 @@ export default function UploadPage() {
     }
   }
 
+  async function handleResetAll() {
+    setResetting(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/documents/reset", { method: "DELETE" });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? t.common.error);
+        return;
+      }
+
+      setMessage(t.upload.resetUploadsSuccess);
+      setDocuments([]);
+      setShowResetModal(false);
+      // Quota shouldn't change, but let's refresh to be safe and consistent
+      await load();
+    } catch {
+      setError(t.common.error);
+    } finally {
+      setResetting(false);
+    }
+  }
+
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(false);
@@ -90,7 +117,7 @@ export default function UploadPage() {
     );
   }
 
-  const disabled = uploading || !quota.canUpload;
+  const disabled = uploading || resetting || !quota.canUpload;
 
   return (
     <AppShell>
@@ -176,7 +203,18 @@ export default function UploadPage() {
       </div>
 
       <section className="mt-8">
-        <h2 className="section-title">{t.upload.recentUploads}</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="section-title">{t.upload.recentUploads}</h2>
+          {documents.length > 0 && (
+            <button
+              onClick={() => setShowResetModal(true)}
+              className="flex items-center gap-2 text-xs font-medium text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            >
+              <Trash2 className="h-3 w-3" />
+              {t.upload.resetUploads}
+            </button>
+          )}
+        </div>
         {documents.length === 0 ? (
           <p className="mt-2 text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.noUploads}</p>
         ) : (
@@ -195,6 +233,62 @@ export default function UploadPage() {
           </ul>
         )}
       </section>
+
+      {/* Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <h3 className="text-xl font-bold text-brand-text-primary dark:text-white">
+                {t.upload.resetUploadsTitle}
+              </h3>
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <p className="text-sm text-brand-text-secondary dark:text-slate-400">
+                {t.upload.resetUploadsDesc}
+              </p>
+
+              <div className="flex items-start gap-3 rounded-lg bg-amber-50 p-3 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <p className="text-xs font-medium leading-relaxed">
+                  {t.upload.resetUploadsWarning}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setShowResetModal(false)}
+                disabled={resetting}
+                className="btn-secondary flex-1 justify-center"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={handleResetAll}
+                disabled={resetting}
+                className="flex flex-[1.5] items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-700 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+              >
+                {resetting ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    {t.upload.resetUploadsConfirm}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
