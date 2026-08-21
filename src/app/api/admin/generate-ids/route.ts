@@ -77,16 +77,21 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const { ids, status } = await req.json();
-    if (!ids || !Array.isArray(ids) || !status) {
-      return NextResponse.json({ error: "Missing ids or status" }, { status: 400 });
+    const { ids, status, trialEndsAt } = await req.json();
+    if (!ids || !Array.isArray(ids)) {
+      return NextResponse.json({ error: "Missing ids" }, { status: 400 });
     }
 
-    const trialEndsAt = status === "trial" ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null;
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (trialEndsAt !== undefined) updateData.trialEndsAt = trialEndsAt ? new Date(trialEndsAt) : null;
+
+    // If setting to paid, clear trial end date
+    if (status === "paid") updateData.trialEndsAt = null;
 
     await prisma.orgID.updateMany({
       where: { id: { in: ids } },
-      data: { status, trialEndsAt },
+      data: updateData,
     });
 
     return NextResponse.json({ success: true });

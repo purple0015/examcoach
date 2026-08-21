@@ -14,7 +14,10 @@ import {
   ShieldAlert,
   Search,
   FileSpreadsheet,
-  ToggleLeft
+  ToggleLeft,
+  Edit2,
+  Calendar,
+  Loader2
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
@@ -75,6 +78,11 @@ export function OrgManagement() {
 
   // Selection for batch actions
   const [selectedIdKeys, setSelectedIdKeys] = useState<Set<string>>(new Set());
+
+  // Edit Trial State
+  const [showEditTrial, setShowEditTrial] = useState(false);
+  const [editTrialDate, setEditTrialDate] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     fetchOrgs();
@@ -163,6 +171,32 @@ export function OrgManagement() {
       console.error("Failed to update status");
     }
   }
+
+  async function handleUpdateTrial(ids: string[], date: string | null, status?: string) {
+    setUpdating(true);
+    try {
+      const res = await fetch("/api/admin/generate-ids", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, trialEndsAt: date, status }),
+      });
+      if (res.ok) {
+        if (selectedOrg) fetchIds(selectedOrg.id);
+        setShowEditTrial(false);
+        setSelectedIdKeys(new Set());
+      }
+    } catch (error) {
+      console.error("Failed to update trial");
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  const quickExtend = (days: number) => {
+    const now = new Date();
+    now.setDate(now.getDate() + days);
+    setEditTrialDate(now.toISOString().split('T')[0]);
+  };
 
   function handleExportCsv() {
     if (!orgIds.length) return;
@@ -268,6 +302,12 @@ export function OrgManagement() {
               </span>
               <div className="flex gap-2">
                 <button 
+                  onClick={() => setShowEditTrial(true)}
+                  className="bg-white px-3 py-1 rounded border border-primary-200 text-primary-700 hover:bg-primary-100 transition-colors dark:bg-slate-800 dark:border-primary-800 dark:text-primary-300 flex items-center gap-1.5"
+                >
+                  <Calendar size={14} /> Edit Trial
+                </button>
+                <button 
                   onClick={() => handleBatchToggleStatus("paid")}
                   className="bg-white px-3 py-1 rounded border border-primary-200 text-primary-700 hover:bg-primary-100 transition-colors dark:bg-slate-800 dark:border-primary-800 dark:text-primary-300"
                 >
@@ -336,8 +376,16 @@ export function OrgManagement() {
                         <span className="text-slate-400">No</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-slate-500">
-                      {id.trialEndsAt ? new Date(id.trialEndsAt).toLocaleDateString() : 'N/A'}
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2 text-slate-500">
+                        {id.trialEndsAt ? new Date(id.trialEndsAt).toLocaleDateString() : 'N/A'}
+                        <button 
+                          onClick={() => { setSelectedIdKeys(new Set([id.id])); setShowEditTrial(true); }}
+                          className="p-1 hover:bg-slate-100 rounded dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -460,6 +508,63 @@ export function OrgManagement() {
                 <button type="button" onClick={() => setShowGenIds(false)} className="btn-secondary px-6">Cancel</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Trial Modal */}
+      {showEditTrial && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md animate-in zoom-in duration-300">
+            <h3 className="text-xl font-bold mb-4">Edit Trial Period</h3>
+            <p className="text-sm text-slate-500 mb-6">Updating {selectedIdKeys.size} selected IDs.</p>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Quick Presets</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => quickExtend(7)} className="btn-secondary text-xs text-center justify-center">7 Days</button>
+                  <button onClick={() => quickExtend(14)} className="btn-secondary text-xs text-center justify-center">14 Days</button>
+                  <button onClick={() => quickExtend(30)} className="btn-secondary text-xs text-center justify-center">30 Days</button>
+                  <button 
+                    onClick={() => handleUpdateTrial(Array.from(selectedIdKeys), null, "paid")} 
+                    className="btn-secondary text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-center justify-center"
+                  >
+                    Set Paid (Active)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Custom End Date</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="date" 
+                    className="input-field flex-1" 
+                    value={editTrialDate}
+                    onChange={e => setEditTrialDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  disabled={updating || !editTrialDate}
+                  onClick={() => handleUpdateTrial(Array.from(selectedIdKeys), editTrialDate)}
+                  className="btn-primary flex-1 justify-center gap-2"
+                >
+                  {updating ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />}
+                  Update Expiry
+                </button>
+                <button 
+                  disabled={updating}
+                  onClick={() => { setShowEditTrial(false); setSelectedIdKeys(new Set()); }} 
+                  className="btn-secondary px-6"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
