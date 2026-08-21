@@ -120,12 +120,12 @@ function EcoCashCheckoutContent() {
               </h2>
               <div className="mt-4 space-y-4 text-sm text-emerald-900 dark:text-emerald-300">
                 <div>
-                  <p className="font-medium opacity-70 uppercase tracking-wider text-[10px]">Merchant Name</p>
-                  <p className="text-lg font-bold">ExamCoach Education</p>
+                  <p className="font-medium opacity-70 uppercase tracking-wider text-[10px]">Recipient Name</p>
+                  <p className="text-lg font-bold">Sibonginkosi Moyo</p>
                 </div>
                 <div>
-                  <p className="font-medium opacity-70 uppercase tracking-wider text-[10px]">EcoCash Shortcode / Merchant #</p>
-                  <p className="text-lg font-bold">123456</p>
+                  <p className="font-medium opacity-70 uppercase tracking-wider text-[10px]">EcoCash Number / Wallet</p>
+                  <p className="text-lg font-bold">0775993734</p>
                 </div>
                 <div>
                   <p className="font-medium opacity-70 uppercase tracking-wider text-[10px]">Amount to Send</p>
@@ -139,10 +139,11 @@ function EcoCashCheckoutContent() {
                 <Info size={20} className="text-primary-500" /> Instructions
               </h2>
               <ol className="mt-4 list-decimal space-y-3 pl-4 text-sm text-brand-text-secondary">
-                <li>Dial <span className="font-bold text-brand-text-primary">*151*2*2*123456*AMOUNT#</span> on your EcoCash line.</li>
-                <li>Enter your PIN to authorize the payment.</li>
-                <li>Wait for the EcoCash SMS with the <span className="font-bold text-brand-text-primary">Transaction Reference Code</span>.</li>
-                <li>Fill in the form on the right with your transaction details.</li>
+                <li>Dial <span className="font-bold text-brand-text-primary">*151#</span> on your EcoCash line and select <span className="font-bold text-brand-text-primary">'Send Money'</span> (or dial <span className="font-bold text-brand-text-primary">*151*1*1*0775993734*{plan.price}#</span>).</li>
+                <li>Enter recipient number <span className="font-bold text-brand-text-primary">0775993734</span> and the required amount.</li>
+                <li>Verify recipient name appears as <span className="font-bold text-brand-text-primary">Sibonginkosi Moyo</span> and enter your PIN to authorize.</li>
+                <li>Wait for the EcoCash confirmation SMS with the <span className="font-bold text-brand-text-primary">Transaction Reference Code</span>.</li>
+                <li>Enter the reference code into the form to complete verification.</li>
               </ol>
             </div>
           </div>
