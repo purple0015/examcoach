@@ -4,18 +4,13 @@ import path from "path";
 import { fetchRemoteFile } from "./fetch-remote-file";
 
 /**
- * Robustly load pdf-parse using dynamic import to avoid ESLint require errors
+ * Robustly load pdf-parse by targeting its core library file directly
  */
 async function parsePdfBuffer(buffer: Buffer): Promise<{ text: string }> {
   try {
-    const pdfModule = await import("pdf-parse");
-    const parsePdf = typeof pdfModule === "function" ? pdfModule : (pdfModule as any).default;
-
-    if (typeof parsePdf !== "function") {
-      throw new Error("PDF_PARSER_NOT_INITIALIZED");
-    }
-
-    return await parsePdf(buffer);
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const pdfParse = require("pdf-parse/lib/pdf-parse.js");
+    return await pdfParse(buffer);
   } catch (error) {
     console.error("Failed to load PDF parser module:", error);
     throw new Error("PDF_PARSER_NOT_INITIALIZED");
