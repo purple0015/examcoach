@@ -4,14 +4,14 @@ import path from "path";
 import { fetchRemoteFile } from "./fetch-remote-file";
 
 /**
- * Robustly load pdf-parse to avoid Next.js Webpack bundler crashes
+ * Robustly load pdf-parse using server external configuration
  */
-function parsePdfBuffer(buffer: Buffer): Promise<{ text: string }> {
+async function parsePdfBuffer(buffer: Buffer): Promise<{ text: string }> {
   try {
-    // Direct library import bypasses root debug script triggers in Webpack
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-    return pdfParse(buffer);
+    // @ts-ignore
+    // eslint-disable-next-line
+    const pdfParse = require("pdf-parse");
+    return await pdfParse(buffer);
   } catch (error) {
     console.error("Failed to load PDF parser module:", error);
     throw new Error("PDF_PARSER_NOT_INITIALIZED");
@@ -107,7 +107,6 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
     return sanitized;
   } catch (error: any) {
     console.error(`Document extraction error for ${filename}:`, error);
-    // Rethrow known errors so route handlers can respond with accurate HTTP status codes
     throw error;
   }
 }
