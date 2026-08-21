@@ -86,7 +86,7 @@ Set `ADMIN_EMAIL` in environment variables. That user gets `role: admin` and can
 - Next.js 14 (App Router)
 - NextAuth.js
 - Prisma + PostgreSQL
-- Google Gemini AI
+- Google Gemini AI (Native document parsing & reasoning)
 - PayPal Subscriptions
 - Tailwind CSS
 - PWA via @ducanh2912/next-pwa
