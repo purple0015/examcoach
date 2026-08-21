@@ -22,31 +22,36 @@ export async function POST(req: Request) {
   const doc = await prisma.document.findFirst({
     where: { id: documentId, userId: session.user.id },
   });
+  
   if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
   const resolvedTopic = topic || doc.topics[0] || "General";
   const count = getTierLimits(tier).flashcardsPerBatch;
+
+  // FIX: Provide the actual document text to the AI instead of just the filename.
+  // NOTE: Change 'doc.content' to whatever field in your Prisma schema holds the extracted text (e.g., doc.text)
+  const documentContext = doc.content || doc.text || doc.filename;
 
   try {
     let cards;
     if (isGroqConfigured()) {
       cards = await generateFlashcardsGroq(
         resolvedTopic,
-        doc.filename,
+        documentContext, // <-- Passes the full text to Groq
         count,
         session.user.locale
       );
     } else {
       cards = await generateFlashcards(
         resolvedTopic,
-        doc.filename,
+        documentContext, // <-- Passes the full text to Gemini
         count,
         session.user.locale
       );
     }
 
     const created = await prisma.$transaction(
-      cards.map((c) =>
+      cards.map((c: { question: string; answer: string }) =>
         prisma.flashcard.create({
           data: {
             userId: session.user.id,
