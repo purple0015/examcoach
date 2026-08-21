@@ -45,11 +45,13 @@ export async function extractTextWithGemini(
  */
 export async function getDocumentText(fileUrl: string, filename: string): Promise<string> {
   try {
+    console.log(`[getDocumentText] Requesting file: ${filename} at URL/Path: ${fileUrl}`);
     let buffer: Buffer;
 
     if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
       const fetchResult = await fetchRemoteFile(fileUrl);
       if (fetchResult.error || !fetchResult.data) {
+        console.error(`[getDocumentText] Fetch failed with status ${fetchResult.status} for URL: ${fileUrl}`);
         throw new Error(`DOCUMENT_UNAVAILABLE:${fetchResult.status || 422}`);
       }
       buffer = fetchResult.data;
@@ -60,6 +62,7 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
         : path.join(process.cwd(), "uploads", relativePath);
 
       if (!fs.existsSync(fullPath)) {
+        console.error(`[getDocumentText] File missing on server disk at path: ${fullPath}`);
         throw new Error(`DOCUMENT_REUPLOAD_REQUIRED: Local file not found at ${fullPath}`);
       }
       buffer = fs.readFileSync(fullPath);

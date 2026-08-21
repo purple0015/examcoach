@@ -49,39 +49,14 @@ export async function POST(req: Request) {
   if (doc.fileUrl) {
     try {
       documentContext = await getDocumentText(doc.fileUrl, doc.filename);
-    } catch (err: any) {
-      if (err.message === "FAILED_TO_EXTRACT_DOCUMENT_TEXT") {
+    } catch (error: any) {
+      if (error.message?.startsWith("DOCUMENT_REUPLOAD_REQUIRED") || error.message?.startsWith("DOCUMENT_UNAVAILABLE")) {
         return NextResponse.json(
-          { error: "FAILED_TO_EXTRACT_DOCUMENT_TEXT", message: "Could not parse document text. The file may be corrupt or protected." },
-          { status: 500 }
+          { error: "The requested document is no longer accessible. Please re-upload the file." },
+          { status: 404 }
         );
       }
-      if (err.message === "INSUFFICIENT_TEXT") {
-        return NextResponse.json(
-          { error: "Could not extract text from document. Please upload a searchable PDF." },
-          { status: 400 }
-        );
-      }
-      if (err.message.startsWith("DOCUMENT_REUPLOAD_REQUIRED")) {
-        return NextResponse.json(
-          {
-            error: "DOCUMENT_REUPLOAD_REQUIRED",
-            message: "This document was stored on temporary storage and must be re-uploaded.",
-          },
-          { status: 422 }
-        );
-      }
-      if (err.message.startsWith("DOCUMENT_UNAVAILABLE")) {
-        const status = parseInt(err.message.split(":")[1]) || 422;
-        return NextResponse.json(
-          {
-            error: "DOCUMENT_UNAVAILABLE",
-            message: "The requested document could not be retrieved from cloud storage. Please re-upload the file.",
-          },
-          { status }
-        );
-      }
-      console.error("Failed to fetch file content from fileUrl:", err);
+      return NextResponse.json({ error: "Failed to process document." }, { status: 500 });
     }
   }
 
