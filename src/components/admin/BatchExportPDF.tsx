@@ -208,7 +208,7 @@ export const BatchExportPDF = ({ orgName, orgPrefix, ids }: BatchExportPDFProps)
       </View>
 
       <View style={styles.footer} fixed>
-        <Text style={styles.copyright}>© 2026 Axiom Neural Systems by Silothomba. All rights reserved.</Text>
+        <Text style={styles.copyright}>© 2026 Axiom Neural Systems by Silethemba. All rights reserved.</Text>
         <View style={styles.footerBottom}>
           <Text style={styles.confidential}>Confidential - For internal school distribution only.</Text>
           <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
