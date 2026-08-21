@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getUploadQuota, releaseUploadSlot, reserveUploadSlot } from "@/lib/subscription";
 import { isGeminiConfigured, parseDocument } from "@/lib/gemini";
 import { prisma } from "@/lib/db";
+import { getFileText } from "@/lib/document-parser";
 
 const ALLOWED_TYPES = [
   "application/pdf",
@@ -12,32 +13,6 @@ const ALLOWED_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
-
-/**
- * Returns the readable text of a file, or null when the bytes are binary
- * (PDF/DOCX containers) and would only produce noise for the parser.
- * Updated to support non-ASCII international characters.
- */
-async function readableText(file: File): Promise<string | null> {
-  try {
-    const raw = await file.text();
-    if (!raw || raw.length < 10) return null;
-    
-    const sample = raw.slice(0, 4000);
-    if (!sample.trim()) return null;
-
-    // Count non-printable control characters (excluding common whitespace)
-    // \x00-\x08, \x0B, \x0C, \x0E-\x1F, \x7F
-    const controlChars = sample.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g);
-    const controlCount = controlChars ? controlChars.length : 0;
-    
-    // If more than 10% are control characters, it's likely binary junk
-    return controlCount / sample.length < 0.1 ? raw.slice(0, 40000) : null;
-  } catch (err) {
-    console.error("Error reading file text:", err);
-    return null;
-  }
-}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -112,7 +87,7 @@ export async function POST(req: Request) {
 
     if (isGeminiConfigured()) {
       try {
-        const content = await readableText(file);
+        const content = await getFileText(file);
         if (content) {
           const parsed = await parseDocument(content, session.user.locale);
           if (parsed.topics.length > 0) topics = parsed.topics;

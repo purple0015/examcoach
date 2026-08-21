@@ -6,6 +6,7 @@ import { generateFlashcardsGroq, isGroqConfigured } from "@/lib/groq";
 import { prisma } from "@/lib/db";
 import { getTierLimits, getUserTier } from "@/lib/subscription";
 import { isMethodAllowed } from "@/lib/study-methods";
+import { getDocumentText } from "@/lib/document-parser";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -28,20 +29,10 @@ export async function POST(req: Request) {
   const resolvedTopic = topic || doc.topics[0] || "General";
   const count = getTierLimits(tier).flashcardsPerBatch;
 
-  // Dynamically fetch file content from fileUrl to fix TypeScript type error and give AI full text
+  // Fetch document content using robust parser
   let documentContext = doc.filename;
   if (doc.fileUrl) {
-    try {
-      const fileRes = await fetch(doc.fileUrl);
-      if (fileRes.ok) {
-        const fetchedText = await fileRes.text();
-        if (fetchedText && fetchedText.trim().length > 0) {
-          documentContext = fetchedText;
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch file content from fileUrl:", err);
-    }
+    documentContext = await getDocumentText(doc.fileUrl, doc.filename);
   }
 
   try {
