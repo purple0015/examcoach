@@ -80,8 +80,18 @@ ${languageInstruction(locale)}
 
 STRICT RULES:
 1. Generate exactly ${count} flashcards testing academic and technical knowledge found in the study material.
-2. DO NOT ask meta-questions about the paper format, section layouts, mark schemes, or answer structure (e.g., DO NOT ask "What is the structure of Paper 3?").
+2. CRITICAL: NEVER generate meta-questions about the exam structure, question numbers, or paper layouts.
 3. Focus purely on subject definitions, algorithms, pseudocode, concepts, and problem-solving steps.
+
+EXAMPLES OF FORBIDDEN META-QUESTIONS (DO NOT GENERATE THESE):
+- ❌ "Which topic is covered in question 1?"
+- ❌ "What is the recommended structure for Paper 3?"
+- ❌ "How many marks are allocated to section B?"
+
+EXAMPLES OF ALLOWED SUBJECT-MATTER FLASHCARDS (ALWAYS GENERATE THESE):
+- ✅ "What is the primary difference between a stack and a queue?"
+- ✅ "Define the term 'polymorphism' in object-oriented programming."
+- ✅ "What is the time complexity of a binary search algorithm?"
 
 Return JSON: {"cards": [{"question": string, "answer": string}]}
 Answers must be concise (at most 3 sentences) and clear.`;

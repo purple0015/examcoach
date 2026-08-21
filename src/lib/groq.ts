@@ -78,18 +78,39 @@ ${explanation.slice(0, 8000)}
 
 export async function generateFlashcardsGroq(
   topic: string,
-  sourceName: string,
+  sourceMaterial: string,
   count = 10,
   locale: Locale = DEFAULT_LOCALE
 ): Promise<{ question: string; answer: string }[]> {
-  const prompt = `Create ${count} exam-focused flashcards on "${topic}" from the material "${sourceName}".
+  const prompt = `Create ${count} exam-focused flashcards on "${topic}" from the material below.
+
+MATERIAL:
+---
+${sourceMaterial}
+---
+
 ${languageInstruction(locale)}
+
+CRITICAL QUALITY RULE: 
+NEVER generate meta-questions about the exam structure, question numbers, or paper layouts.
+ONLY generate subject-matter flashcards.
+
+EXAMPLES OF FORBIDDEN META-QUESTIONS (DO NOT GENERATE THESE):
+- ❌ "Which topic is covered in question 1?"
+- ❌ "What is the recommended structure for Paper 3?"
+- ❌ "How many marks are allocated to section B?"
+
+EXAMPLES OF ALLOWED SUBJECT-MATTER FLASHCARDS (ALWAYS GENERATE THESE):
+- ✅ "What is the primary difference between a stack and a queue?"
+- ✅ "Define the term 'polymorphism' in object-oriented programming."
+- ✅ "What is the time complexity of a binary search algorithm?"
+
 Return JSON: {"cards": [{"question": string, "answer": string}]}
 Answers must be at most 3 sentences and testable in an exam.`;
 
   const parsed = await generateJson<{ cards?: { question: string; answer: string }[] }>(
     prompt,
-    "You are a flashcard architect. Create clear, concise, and highly testable questions and answers."
+    "You are a flashcard architect. Create clear, concise, and highly testable questions and answers. Never ask about exam formatting."
   );
   return (parsed.cards ?? []).filter((c) => c.question && c.answer).slice(0, count);
 }

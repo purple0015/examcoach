@@ -69,17 +69,26 @@ export async function POST(req: Request) {
     }
 
     const created = await prisma.$transaction(
-      cards.map((c: { question: string; answer: string }) =>
-        prisma.flashcard.create({
-          data: {
-            userId: session.user.id,
-            documentId: doc.id,
-            topic: resolvedTopic,
-            question: c.question,
-            answer: c.answer,
-          },
+      cards
+        .filter((c: { question: string; answer: string }) => {
+          const q = c.question.toLowerCase();
+          const FORBIDDEN_WORDS = [
+            "paper", "section", "question 1", "question 2", "short answer", 
+            "marks", "structure", "cover page", "instructions", "first question"
+          ];
+          return !FORBIDDEN_WORDS.some((word) => q.includes(word));
         })
-      )
+        .map((c: { question: string; answer: string }) =>
+          prisma.flashcard.create({
+            data: {
+              userId: session.user.id,
+              documentId: doc.id,
+              topic: resolvedTopic,
+              question: c.question,
+              answer: c.answer,
+            },
+          })
+        )
     );
 
     return NextResponse.json({ flashcards: created });
