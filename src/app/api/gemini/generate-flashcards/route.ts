@@ -56,6 +56,15 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+      if (err.message.startsWith("DOCUMENT_REUPLOAD_REQUIRED")) {
+        return NextResponse.json(
+          {
+            error: "DOCUMENT_REUPLOAD_REQUIRED",
+            message: "This document was stored on temporary storage and must be re-uploaded.",
+          },
+          { status: 422 }
+        );
+      }
       console.error("Failed to fetch file content from fileUrl:", err);
     }
   }

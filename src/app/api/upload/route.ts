@@ -67,7 +67,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let fileUrl = `local://${file.name}`;
+    let fileUrl = "";
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const blob = await put(`uploads/${session.user.id}/${Date.now()}-${file.name}`, file, {
@@ -76,9 +76,23 @@ export async function POST(req: Request) {
         fileUrl = blob.url;
       } catch (blobError) {
         console.error("Vercel Blob upload failed:", blobError);
-        // Fallback to local reference if blob fails but we want the record created
-        // Alternatively, we could throw here if storage is mandatory
+        await releaseUploadSlot(session.user.id);
+        return NextResponse.json(
+          { error: "Storage service unavailable. Please try again later." },
+          { status: 503 }
+        );
       }
+    } else {
+      // In development, we might allow local if configured, but for production security
+      // we enforce BLOB_READ_WRITE_TOKEN.
+      if (process.env.NODE_ENV === "production") {
+        await releaseUploadSlot(session.user.id);
+        return NextResponse.json(
+          { error: "Cloud storage is not configured. Upload disabled." },
+          { status: 500 }
+        );
+      }
+      fileUrl = `local://${file.name}`;
     }
 
     const fallbackTopic = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();

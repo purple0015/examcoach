@@ -54,8 +54,11 @@ export async function POST(req: Request) {
         }
         if (err.message.startsWith("DOCUMENT_REUPLOAD_REQUIRED")) {
           return NextResponse.json(
-            { error: "This file was uploaded to local storage and is no longer available. Please re-upload it." },
-            { status: 410 }
+            {
+              error: "DOCUMENT_REUPLOAD_REQUIRED",
+              message: "This document was stored on temporary storage and must be re-uploaded.",
+            },
+            { status: 422 }
           );
         }
         throw err;
