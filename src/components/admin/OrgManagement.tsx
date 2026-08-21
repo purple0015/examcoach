@@ -17,9 +17,12 @@ import {
   ToggleLeft,
   Edit2,
   Calendar,
-  Loader2
+  Loader2,
+  FileText
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { BatchExportPDF } from "./BatchExportPDF";
 
 interface Organization {
   id: string;
@@ -292,6 +295,24 @@ export function OrgManagement() {
               <button onClick={handleExportCsv} className="btn-secondary btn-sm gap-2">
                 <Download size={16} /> Export CSV
               </button>
+              <PDFDownloadLink
+                document={
+                  <BatchExportPDF 
+                    orgName={selectedOrg.name} 
+                    orgPrefix={selectedOrg.prefix} 
+                    ids={orgIds} 
+                  />
+                }
+                fileName={`${selectedOrg.slug}-Batch-IDs.pdf`}
+                className="btn-secondary btn-sm gap-2"
+              >
+                {({ loading }) => (
+                  <>
+                    {loading ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
+                    Download PDF
+                  </>
+                )}
+              </PDFDownloadLink>
             </div>
           </div>
 

@@ -174,6 +174,10 @@ export const sn: Dictionary = {
         name: "Makadhi ekudzidza",
         description: "Makadhi emibvunzo nemhinduro anogadzirwa ne-AI kubva pamanotsi ako.",
       },
+      quiz: {
+        name: "Mibvunzo",
+        description: "Edza ruzivo rwako nemibvunzo inosarudzwa inofambidzana.",
+      },
       active_recall: {
         name: "Kurangarira uchishandisa pfungwa",
         description: "Pindura mibvunzo nemusoro usati watarisa manotsi.",

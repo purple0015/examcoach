@@ -168,6 +168,10 @@ export const en = {
         name: "Flashcards",
         description: "AI-generated question and answer cards from your own material.",
       },
+      quiz: {
+        name: "Quiz",
+        description: "Test your knowledge with interactive multiple-choice questions.",
+      },
       active_recall: {
         name: "Active recall",
         description: "Answer questions from memory before checking your notes.",

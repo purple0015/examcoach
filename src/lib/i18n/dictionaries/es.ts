@@ -170,6 +170,10 @@ export const es: Dictionary = {
         name: "Flashcards",
         description: "Tarjetas de preguntas y respuestas generadas por IA a partir de tu propio material.",
       },
+      quiz: {
+        name: "Quiz",
+        description: "Pon a prueba tus conocimientos con preguntas interactivas de opción múltiple.",
+      },
       active_recall: {
         name: "Recuerdo activo",
         description: "Responde preguntas de memoria antes de consultar tus notas.",

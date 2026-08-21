@@ -174,6 +174,10 @@ export const nd: Dictionary = {
         name: "Amakhadi okufunda",
         description: "Amakhadi emibuzo lezimpendulo enziwa yi-AI kusukela kumanothi akho.",
       },
+      quiz: {
+        name: "Imibuzo",
+        description: "Hlola ulwazi lwakho ngemibuzo ekhethwayo ehlanganyelweyo.",
+      },
       active_recall: {
         name: "Ukukhumbula ngamandla",
         description: "Phendula imibuzo ngekhanda ungakabheki emanothini.",

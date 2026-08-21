@@ -170,6 +170,10 @@ export const sw: Dictionary = {
         name: "Flashcards",
         description: "Kadi za maswali na majibu zinazozalishwa na AI kutoka kwa nyenzo zako mwenyewe.",
       },
+      quiz: {
+        name: "Chemsha bongo",
+        description: "Pima maarifa yako kwa maswali shirikishi ya kuchagua.",
+      },
       active_recall: {
         name: "Kumbukumbu hai",
         description: "Jibu maswali kutoka kwa kumbukumbu kabla ya kuangalia maelezo yako.",

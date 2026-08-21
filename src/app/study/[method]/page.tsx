@@ -53,7 +53,11 @@ export default function StudyMethodPage({ params }: { params: { method: string }
   }
 
   const allowed = isMethodAllowed(subscription.tier, method.id);
-  const copy = t.study.methods[method.id];
+  const methodKey = method.id as keyof typeof t.study.methods;
+  const copy = t.study.methods[methodKey] ?? {
+    name: method.id,
+    description: "",
+  };
 
   return (
     <AppShell>

@@ -169,6 +169,10 @@ export const zh: Dictionary = {
         name: "抽认卡",
         description: "AI 根据您自己的材料生成的问答卡。",
       },
+      quiz: {
+        name: "测验",
+        description: "通过交互式多选题测试您的知识。",
+      },
       active_recall: {
         name: "主动回忆",
         description: "在查看笔记前凭记忆回答问题。",
