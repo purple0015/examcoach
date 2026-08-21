@@ -34,18 +34,13 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Exclude pdf-parse from Webpack bundling so Node resolves it directly at runtime
+  serverExternalPackages: ["pdf-parse"],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "lh3.googleusercontent.com" }],
   },
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },
-    serverComponentsExternalPackages: ["pdf-parse"],
-  },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = [...(config.externals || []), "pdf-parse"];
-    }
-    return config;
   },
 };
 
