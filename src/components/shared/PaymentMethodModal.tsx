@@ -6,7 +6,7 @@ import { useI18n } from "@/components/providers/I18nProvider";
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (method: "paypal" | "paynow") => void;
+  onSelect: (method: "paypal" | "paynow" | "ecocash") => void;
   tierName: string;
 }
 
@@ -31,30 +31,53 @@ export function PaymentMethodModal({ isOpen, onClose, onSelect, tierName }: Paym
           </p>
 
           <button
-            onClick={() => onSelect("paypal")}
-            className="flex w-full items-center gap-4 rounded-xl border border-slate-200 p-4 text-left transition-all hover:border-primary-500 hover:bg-primary-50 dark:border-slate-700 dark:hover:bg-primary-900/10"
+            onClick={() => onSelect("ecocash")}
+            className="flex w-full items-center gap-4 rounded-xl border border-emerald-500 bg-emerald-50 p-4 text-left transition-all hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30">
-              <CreditCard size={24} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30">
+              <Smartphone size={24} />
             </div>
             <div>
-              <p className="font-bold text-brand-text-primary dark:text-white">PayPal / Global Card</p>
-              <p className="text-xs text-brand-text-secondary">International cards & PayPal balance</p>
+              <p className="font-bold text-brand-text-primary dark:text-white">EcoCash Manual Transfer</p>
+              <p className="text-xs text-brand-text-secondary">Send via USSD or EcoCash App</p>
             </div>
           </button>
 
-          <button
-            onClick={() => onSelect("paynow")}
-            className="flex w-full items-center gap-4 rounded-xl border border-slate-200 p-4 text-left transition-all hover:border-emerald-500 hover:bg-emerald-50 dark:border-slate-700 dark:hover:bg-emerald-900/10"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30">
-              <Zap className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="font-bold text-brand-text-primary dark:text-white">Paynow (ZW Local)</p>
-              <p className="text-xs text-brand-text-secondary">EcoCash, OneMoney, Zimswitch & Local Cards</p>
-            </div>
-          </button>
+          <div className="relative opacity-60 grayscale cursor-not-allowed">
+            <button
+              disabled
+              className="flex w-full items-center gap-4 rounded-xl border border-slate-200 p-4 text-left transition-all dark:border-slate-700"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30">
+                <CreditCard size={24} />
+              </div>
+              <div>
+                <p className="font-bold text-brand-text-primary dark:text-white">PayPal / Global Card</p>
+                <p className="text-xs text-brand-text-secondary">International cards & PayPal balance</p>
+              </div>
+            </button>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              Coming Soon
+            </span>
+          </div>
+
+          <div className="relative opacity-60 grayscale cursor-not-allowed">
+            <button
+              disabled
+              className="flex w-full items-center gap-4 rounded-xl border border-slate-200 p-4 text-left transition-all dark:border-slate-700"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30">
+                <Zap className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="font-bold text-brand-text-primary dark:text-white">Paynow (ZW Local)</p>
+                <p className="text-xs text-brand-text-secondary">EcoCash, OneMoney, Zimswitch & Local Cards</p>
+              </div>
+            </button>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-slate-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+              Coming Soon
+            </span>
+          </div>
         </div>
 
         <div className="mt-8">
@@ -64,6 +87,25 @@ export function PaymentMethodModal({ isOpen, onClose, onSelect, tierName }: Paym
         </div>
       </div>
     </div>
+  );
+}
+
+function Smartphone({ size, className }: { size?: number; className?: string }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
   );
 }
 

@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
       where: {
         userId: session.user.id,
         status: "pending",
-        gateway: "paynow",
       },
       orderBy: { createdAt: "desc" },
     });

@@ -11,6 +11,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { PLANS } from "@/lib/plans";
 import { AdminStats } from "@/types";
 import { OrgManagement } from "@/components/admin/OrgManagement";
+import { PaymentVerification } from "@/components/admin/PaymentVerification";
 
 export default function AdminPage() {
   const { t } = useI18n();
@@ -18,7 +19,7 @@ export default function AdminPage() {
   const { status } = useSession();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"stats" | "orgs">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "orgs" | "payments">("stats");
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login?callbackUrl=/admin");
@@ -69,6 +70,16 @@ export default function AdminPage() {
           }`}
         >
           System Stats
+        </button>
+        <button
+          onClick={() => setActiveTab("payments")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "payments" 
+              ? "border-primary-500 text-primary-600" 
+              : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          }`}
+        >
+          Payment Verification
         </button>
         <button
           onClick={() => setActiveTab("orgs")}
@@ -132,6 +143,8 @@ export default function AdminPage() {
             </section>
           </div>
         </div>
+      ) : activeTab === "payments" ? (
+        <PaymentVerification />
       ) : (
         <OrgManagement />
       )}

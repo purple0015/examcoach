@@ -82,10 +82,18 @@ model Payment {
   userId        String
   amount        Float
   currency      String   @default("USD")
-  status        String   // "pending" | "completed" | "failed"
+  status        String   // "pending" | "completed" | "failed" | "rejected"
   reference     String   @unique
-  gateway       String   // "paynow" | "paypal"
-  gatewayRef    String?  // Paynow Poll URL or PayPal Order ID
+  gateway       String   // "paynow" | "paypal" | "ecocash"
+  gatewayRef    String?  // Paynow Poll URL or PayPal Order ID or EcoCash Ref
+  
+  // Manual EcoCash Fields
+  phoneNumber   String?
+  schoolName    String?
+  contactDetails String?
+  verificationNote String?
+  adminId       String?
+
   tier          String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -129,6 +137,7 @@ model Subscription {
   trialStartDate   DateTime  @default(now())
   trialEndDate     DateTime?
   currentPeriodEnd DateTime?
+  gracePeriodEnd   DateTime?
   seats            Int       @default(1)
   maxSeats         Int       @default(1)
   createdAt        DateTime  @default(now())

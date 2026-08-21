@@ -10,8 +10,17 @@ function startOfUtcDay(date = new Date()): Date {
 }
 
 export async function getActiveSubscription(userId: string) {
+  const now = new Date();
   return prisma.subscription.findFirst({
-    where: { userId, status: "active" },
+    where: { 
+      userId, 
+      status: "active",
+      OR: [
+        { currentPeriodEnd: null },
+        { currentPeriodEnd: { gt: now } },
+        { gracePeriodEnd: { gt: now } }
+      ]
+    },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -19,7 +28,7 @@ export async function getActiveSubscription(userId: string) {
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { email: true, orgIdCode: true },
   });
 
   // Admin bypass: purpleteddy002@gmail.com gets unlimited access and is not billed
@@ -27,16 +36,27 @@ export async function getUserTier(userId: string): Promise<SubscriptionTier> {
     return "global_elite";
   }
 
+  // Org ID Check
+  if (user?.orgIdCode) {
+    const orgIdRecord = await prisma.orgID.findUnique({
+      where: { code: user.orgIdCode },
+    });
+    
+    if (orgIdRecord) {
+      if (orgIdRecord.status === "paid") return "pro_scholar";
+      if (orgIdRecord.status === "trial") {
+        const now = new Date();
+        if (orgIdRecord.trialEndsAt && now < orgIdRecord.trialEndsAt) {
+          return "pro_scholar";
+        }
+      }
+      return "starter_free";
+    }
+  }
+
   const subscription = await getActiveSubscription(userId);
   if (!subscription) return "starter_free";
 
-  if (
-    subscription.tier === "starter_free" &&
-    subscription.trialEndDate &&
-    subscription.trialEndDate < new Date()
-  ) {
-    return "starter_free";
-  }
   return subscription.tier as SubscriptionTier;
 }
 

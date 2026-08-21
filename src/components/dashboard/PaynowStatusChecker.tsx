@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, XCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function PaynowStatusChecker() {
   const [pendingPayment, setPendingPayment] = useState<any>(null);
-  const [status, setStatus] = useState<"polling" | "completed" | "failed" | "idle">("idle");
+  const [status, setStatus] = useState<"polling" | "manual_pending" | "completed" | "failed" | "idle">("idle");
   const router = useRouter();
 
   useEffect(() => {
@@ -16,7 +16,11 @@ export function PaynowStatusChecker() {
       .then((data) => {
         if (data && data.reference) {
           setPendingPayment(data);
-          setStatus("polling");
+          if (data.gateway === "ecocash") {
+            setStatus("manual_pending");
+          } else {
+            setStatus("polling");
+          }
         }
       });
   }, []);
@@ -57,16 +61,18 @@ export function PaynowStatusChecker() {
 
   if (status === "idle") return null;
 
+  const isManual = status === "manual_pending";
+
   return (
     <div className="mb-4 animate-in fade-in slide-in-from-top-4 duration-300">
       <div className={`flex items-center justify-between rounded-xl border p-4 shadow-sm ${
-        status === "polling" ? "bg-primary-50 border-primary-100 dark:bg-primary-900/10 dark:border-primary-900/20" :
+        status === "polling" || isManual ? "bg-primary-50 border-primary-100 dark:bg-primary-900/10 dark:border-primary-900/20" :
         status === "completed" ? "bg-emerald-50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20" :
         "bg-red-50 border-red-100 dark:bg-red-900/10 dark:border-red-900/20"
       }`}>
         <div className="flex items-center gap-3">
-          {status === "polling" ? (
-            <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+          {status === "polling" || isManual ? (
+            isManual ? <Clock className="h-5 w-5 text-primary-600" /> : <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
           ) : status === "completed" ? (
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           ) : (
@@ -76,23 +82,25 @@ export function PaynowStatusChecker() {
           <div>
             <p className="text-sm font-bold text-brand-text-primary dark:text-white">
               {status === "polling" ? "Verifying Paynow Payment..." :
+               isManual ? "Payment Verification Pending" :
                status === "completed" ? "Payment Successful!" :
                "Payment Verification Failed"}
             </p>
             <p className="text-xs text-brand-text-secondary dark:text-slate-400">
               {status === "polling" ? `Reference: ${pendingPayment.reference} - Checking for EcoCash/Card status.` :
+               isManual ? `EcoCash Ref: ${pendingPayment.reference} - Our team is manually verifying your payment.` :
                status === "completed" ? "Your subscription has been activated. Refreshing..." :
                "We couldn't verify your payment. Please contact support if this is an error."}
             </p>
           </div>
         </div>
 
-        {status === "failed" && (
+        {(status === "failed" || isManual) && (
           <button 
             onClick={() => setStatus("idle")}
-            className="text-xs font-medium text-red-600 hover:underline"
+            className="text-xs font-medium text-slate-500 hover:underline"
           >
-            Dismiss
+            {isManual ? "Hide" : "Dismiss"}
           </button>
         )}
       </div>

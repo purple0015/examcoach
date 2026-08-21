@@ -28,10 +28,16 @@ export default function PricingPage() {
       .then((data) => setSubscription(data as SubscriptionStatus | null));
   }, [status]);
 
-  async function handleSelection(method: "paypal" | "paynow") {
+  async function handleSelection(method: "paypal" | "paynow" | "ecocash") {
     if (!selectedTier) return;
     
     setShowModal(false);
+    
+    if (method === "ecocash") {
+      router.push(`/checkout/ecocash?tier=${selectedTier}`);
+      return;
+    }
+
     setPending(selectedTier);
     setError("");
 
