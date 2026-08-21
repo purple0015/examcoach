@@ -4,7 +4,7 @@ import path from "path";
 import { fetchRemoteFile } from "./fetch-remote-file";
 
 /**
- * Dynamically import pdf-parse to comply with package exports and pass linting
+ * Dynamically imports pdf-parse to comply with ESM resolution and pass linting.
  */
 async function parsePdfBuffer(buffer: Buffer): Promise<{ text: string }> {
   try {
