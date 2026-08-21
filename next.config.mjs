@@ -34,12 +34,12 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  serverExternalPackages: ["pdf-parse"],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "lh3.googleusercontent.com" }],
   },
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },
+    serverComponentsExternalPackages: ["pdf-parse"],
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
