@@ -47,7 +47,17 @@ export async function POST(req: Request) {
   // Fetch document content using robust parser
   let documentContext = doc.filename;
   if (doc.fileUrl) {
-    documentContext = await getDocumentText(doc.fileUrl, doc.filename);
+    try {
+      documentContext = await getDocumentText(doc.fileUrl, doc.filename);
+    } catch (err: any) {
+      if (err.message === "INSUFFICIENT_TEXT") {
+        return NextResponse.json(
+          { error: "Could not extract text from document. Please upload a searchable PDF." },
+          { status: 400 }
+        );
+      }
+      console.error("Failed to fetch file content from fileUrl:", err);
+    }
   }
 
   try {

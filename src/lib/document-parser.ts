@@ -1,5 +1,7 @@
 // @ts-ignore
 const pdf = require("pdf-parse");
+import fs from "fs";
+import path from "path";
 
 /**
  * Strips common exam boilerplate to prevent AI from focusing on meta-data.
@@ -29,29 +31,52 @@ function sanitizeContent(text: string): string {
 }
 
 /**
- * Utility to extract text from a file URL (e.g., Vercel Blob)
+ * Utility to extract text from a file URL (Local vs Remote)
  */
 export async function getDocumentText(fileUrl: string, filename: string): Promise<string> {
   try {
-    const res = await fetch(fileUrl);
-    if (!res.ok) throw new Error(`Failed to fetch file: ${res.statusText}`);
+    let buffer: Buffer;
+    
+    if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+      const res = await fetch(fileUrl);
+      if (!res.ok) throw new Error(`Failed to fetch remote file: ${res.statusText}`);
+      const arrayBuffer = await res.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } else {
+      // Handle local:// or relative paths
+      const relativePath = fileUrl.replace("local://", "");
+      // Look in process.cwd()/uploads as per requirement, or fallback to current dir if not prefixed
+      const fullPath = path.isAbsolute(relativePath) 
+        ? relativePath 
+        : path.join(process.cwd(), "uploads", relativePath);
+      
+      if (!fs.existsSync(fullPath)) {
+        throw new Error(`Local file not found at ${fullPath}`);
+      }
+      buffer = fs.readFileSync(fullPath);
+    }
 
     let text = "";
     if (filename.toLowerCase().endsWith(".pdf")) {
-      const arrayBuffer = await res.arrayBuffer();
-      const pdfBuffer = Buffer.from(arrayBuffer);
       // @ts-ignore
-      const data = await pdf(pdfBuffer);
+      const data = await pdf(buffer);
       text = data.text || "";
     } else {
-      // Default to text extraction for .txt and others
-      text = await res.text();
+      text = buffer.toString("utf-8");
     }
 
-    return sanitizeContent(text);
-  } catch (error) {
+    const sanitized = sanitizeContent(text);
+    
+    // Hallucination Guardrail: 50 character minimum
+    if (sanitized.trim().length < 50) {
+      throw new Error("INSUFFICIENT_TEXT");
+    }
+
+    return sanitized;
+  } catch (error: any) {
+    if (error.message === "INSUFFICIENT_TEXT") throw error;
     console.error(`Document extraction error for ${filename}:`, error);
-    // Fallback to filename so something is returned
+    // Fallback to filename so something is returned if it's not a guardrail issue
     return filename;
   }
 }
@@ -62,14 +87,15 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
 export async function getFileText(file: File): Promise<string> {
   try {
     let text = "";
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfBuffer = Buffer.from(arrayBuffer);
       // @ts-ignore
-      const data = await pdf(pdfBuffer);
+      const data = await pdf(buffer);
       text = data.text || "";
     } else {
-      text = await file.text();
+      text = buffer.toString("utf-8");
     }
 
     return sanitizeContent(text);
