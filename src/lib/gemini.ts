@@ -93,11 +93,42 @@ EXAMPLES OF ALLOWED SUBJECT-MATTER FLASHCARDS (ALWAYS GENERATE THESE):
 - ✅ "Define the term 'polymorphism' in object-oriented programming."
 - ✅ "What is the time complexity of a binary search algorithm?"
 
-Return JSON: {"cards": [{"question": string, "answer": string}]}
+Return JSON: {"flashcards": [{"question": string, "answer": string}]}
 Answers must be concise (at most 3 sentences) and clear.`;
 
-  const parsed = await generateJson<{ cards?: { question: string; answer: string }[] }>(prompt);
-  return (parsed.cards ?? []).filter((c) => c.question && c.answer).slice(0, count);
+  const parsed = await generateJson<{ flashcards?: { question: string; answer: string }[] }>(prompt);
+  return (parsed.flashcards ?? []).filter((c) => c.question && c.answer).slice(0, count);
+}
+
+export async function generateQuiz(
+  topic: string,
+  sourceMaterial: string,
+  count = 5,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<{ id: string; question: string; options: string[]; correctAnswer: string; explanation: string }[]> {
+  const prompt = `Create ${count} high-quality multiple-choice questions on "${topic}" from the material below.
+
+MATERIAL:
+---
+${sourceMaterial}
+---
+
+${languageInstruction(locale)}
+
+CRITICAL QUALITY RULE: 
+NEVER generate meta-questions about the exam structure.
+ONLY generate subject-matter questions.
+
+Return JSON: {"quiz": [{"id": string, "question": string, "options": string[4], "correctAnswer": string, "explanation": string}]}
+Ensure "options" contains exactly 4 choices and "correctAnswer" matches one of them exactly.`;
+
+  const parsed = await generateJson<{
+    quiz?: { id: string; question: string; options: string[]; correctAnswer: string; explanation: string }[];
+  }>(prompt);
+
+  return (parsed.quiz ?? [])
+    .filter((q) => q.question && Array.isArray(q.options) && q.options.length === 4 && q.correctAnswer)
+    .slice(0, count);
 }
 
 export async function generateMockExam(

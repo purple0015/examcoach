@@ -18,6 +18,7 @@ export const PLANS: Plan[] = [
     },
     studyMethods: [
       "flashcards",
+      "quiz",
       "active_recall",
       "pomodoro",
       "feynman",
@@ -44,7 +45,7 @@ export const PLANS: Plan[] = [
       groqTokenLimit: 5000,
       hasPriorityInference: false,
     },
-    studyMethods: ["flashcards", "active_recall", "pomodoro"],
+    studyMethods: ["flashcards", "quiz", "active_recall", "pomodoro"],
     dashboard: "starter",
     highlights: ["Global Curriculum Access", "Basic Groq LPU Speed", "3 Core Study Methods"],
   },
@@ -65,6 +66,7 @@ export const PLANS: Plan[] = [
     },
     studyMethods: [
       "flashcards",
+      "quiz",
       "active_recall",
       "pomodoro",
       "feynman",
@@ -93,6 +95,7 @@ export const PLANS: Plan[] = [
     },
     studyMethods: [
       "flashcards",
+      "quiz",
       "active_recall",
       "pomodoro",
       "feynman",
@@ -126,6 +129,7 @@ export const PLANS: Plan[] = [
     },
     studyMethods: [
       "flashcards",
+      "quiz",
       "active_recall",
       "pomodoro",
       "feynman",
@@ -160,6 +164,7 @@ export const PLANS: Plan[] = [
     },
     studyMethods: [
       "flashcards",
+      "quiz",
       "active_recall",
       "pomodoro",
       "feynman",
@@ -194,6 +199,7 @@ export const PLANS: Plan[] = [
     },
     studyMethods: [
       "flashcards",
+      "quiz",
       "active_recall",
       "pomodoro",
       "feynman",

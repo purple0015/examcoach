@@ -44,6 +44,7 @@ export type DashboardVariant =
 
 export type StudyMethodId =
   | "flashcards"
+  | "quiz"
   | "active_recall"
   | "pomodoro"
   | "feynman"

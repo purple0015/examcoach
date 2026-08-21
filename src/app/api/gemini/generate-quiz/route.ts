@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { generateFlashcards } from "@/lib/gemini";
-import { generateFlashcardsGroq, isGroqConfigured } from "@/lib/groq";
+import { generateQuiz } from "@/lib/gemini";
+import { generateQuizGroq, isGroqConfigured } from "@/lib/groq";
 import { prisma } from "@/lib/db";
 import { getTierLimits, getUserTier } from "@/lib/subscription";
 import { isMethodAllowed } from "@/lib/study-methods";
@@ -15,8 +15,8 @@ export async function POST(req: Request) {
   }
 
   const tier = await getUserTier(session.user.id);
-  if (!isMethodAllowed(tier, "flashcards")) {
-    return NextResponse.json({ error: "Flashcards are not available on your plan" }, { status: 403 });
+  if (!isMethodAllowed(tier, "quiz")) {
+    return NextResponse.json({ error: "Quizzes are not available on your plan" }, { status: 403 });
   }
 
   const { documentId, topic, reset } = (await req.json()) as { 
@@ -24,6 +24,7 @@ export async function POST(req: Request) {
     topic?: string; 
     reset?: boolean 
   };
+  
   const doc = await prisma.document.findFirst({
     where: { id: documentId, userId: session.user.id },
   });
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
   const resolvedTopic = topic || doc.topics[0] || "General";
 
   if (reset) {
-    await prisma.flashcard.deleteMany({
+    await prisma.quizQuestion.deleteMany({
       where: {
         userId: session.user.id,
         documentId: doc.id,
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const count = getTierLimits(tier).flashcardsPerBatch;
+  const count = 5; // Default quiz size
 
   // Fetch document content using robust parser
   let documentContext = doc.filename;
@@ -69,19 +70,19 @@ export async function POST(req: Request) {
   }
 
   try {
-    let cards;
+    let quiz;
     if (isGroqConfigured()) {
       try {
-        cards = await generateFlashcardsGroq(
+        quiz = await generateQuizGroq(
           resolvedTopic,
           documentContext,
           count,
           session.user.locale
         );
       } catch (groqError: any) {
-        console.error("Groq flashcard generation failed, falling back to Gemini:", groqError);
+        console.error("Groq quiz generation failed, falling back to Gemini:", groqError);
         // Seamless fallback to Gemini
-        cards = await generateFlashcards(
+        quiz = await generateQuiz(
           resolvedTopic,
           documentContext,
           count,
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
         );
       }
     } else {
-      cards = await generateFlashcards(
+      quiz = await generateQuiz(
         resolvedTopic,
         documentContext,
         count,
@@ -97,32 +98,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const created = await prisma.$transaction(
-      cards
-        .filter((c: { question: string; answer: string }) => {
-          const q = c.question.toLowerCase();
-          const FORBIDDEN_WORDS = [
-            "paper", "section", "question 1", "question 2", "short answer", 
-            "marks", "structure", "cover page", "instructions", "first question"
-          ];
-          return !FORBIDDEN_WORDS.some((word) => q.includes(word));
-        })
-        .map((c: { question: string; answer: string }) =>
-          prisma.flashcard.create({
-            data: {
-              userId: session.user.id,
-              documentId: doc.id,
-              topic: resolvedTopic,
-              question: c.question,
-              answer: c.answer,
-            },
-          })
-        )
-    );
+    const created = await prisma.quizQuestion.createMany({
+      data: quiz.map((q) => ({
+        userId: session.user.id,
+        documentId: doc.id,
+        topic: resolvedTopic,
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+      })),
+    });
 
-    return NextResponse.json({ flashcards: created });
+    const savedQuestions = await prisma.quizQuestion.findMany({
+      where: {
+        userId: session.user.id,
+        documentId: doc.id,
+        topic: resolvedTopic,
+      },
+      orderBy: { createdAt: "desc" },
+      take: count,
+    });
+
+    return NextResponse.json({ quiz: savedQuestions });
   } catch (error) {
-    console.error("Flashcard generation error:", error);
-    return NextResponse.json({ error: "Failed to generate flashcards" }, { status: 500 });
+    console.error("Quiz generation error:", error);
+    return NextResponse.json({ error: "Failed to generate quiz" }, { status: 500 });
   }
 }

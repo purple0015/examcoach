@@ -3,6 +3,7 @@ import { getPlanByTier, PLANS } from "@/lib/plans";
 
 export const STUDY_METHODS: StudyMethod[] = [
   { id: "flashcards", href: "/study/flashcards", icon: "Layers", minutes: 15, intensity: "light" },
+  { id: "quiz", href: "/study/quiz", icon: "CheckSquare", minutes: 10, intensity: "moderate" },
   { id: "active_recall", href: "/study/active-recall", icon: "Brain", minutes: 20, intensity: "moderate" },
   { id: "pomodoro", href: "/study/pomodoro", icon: "Timer", minutes: 25, intensity: "light" },
   { id: "feynman", href: "/study/feynman", icon: "MessageSquare", minutes: 20, intensity: "deep" },

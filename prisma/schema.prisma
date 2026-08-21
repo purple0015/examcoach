@@ -31,6 +31,7 @@ model User {
   studySessions StudySession[]
   documents     Document[]
   flashcards    Flashcard[]
+  quizQuestions QuizQuestion[]
   quizResults   QuizResult[]
   mockExams     MockExam[]
   payments      Payment[]
@@ -191,8 +192,9 @@ model Document {
   parsedAt  DateTime?
   createdAt DateTime  @default(now())
 
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   flashcards Flashcard[]
+  quizQuestions QuizQuestion[]
 }
 
 model Flashcard {
@@ -222,6 +224,21 @@ model QuizResult {
   createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  userId        String
+  documentId    String?
+  topic         String
+  question      String   @db.Text
+  options       String[]
+  correctAnswer String
+  explanation   String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id])
 }
 
 model MockExam {

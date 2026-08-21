@@ -4,6 +4,11 @@ import { DEFAULT_LOCALE, LOCALE_AI_NAMES } from "@/lib/i18n/config";
 
 const MODEL = process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
 
+const SYSTEM_PROMPT = `You are an expert AI study assistant. 
+Generate study material based ONLY on the provided text.
+You MUST respond ONLY with a valid JSON object matching the requested schema. 
+Do NOT include markdown formatting, triple backticks, or extra commentary.`;
+
 function client(): Groq {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("GROQ_API_KEY is not configured");
@@ -24,7 +29,7 @@ async function generateJson<T>(prompt: string, systemMessage?: string): Promise<
     messages: [
       {
         role: "system",
-        content: systemMessage ?? "You are a helpful AI study assistant. You always respond in JSON format.",
+        content: systemMessage ?? SYSTEM_PROMPT,
       },
       {
         role: "user",
@@ -40,9 +45,12 @@ async function generateJson<T>(prompt: string, systemMessage?: string): Promise<
 
   try {
     return JSON.parse(text) as T;
-  } catch {
+  } catch (err) {
     const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-    if (!match) throw new Error("Groq returned a non-JSON response");
+    if (!match) {
+      console.error("Groq JSON Parse Error. Raw text:", text);
+      throw new Error("Groq returned a non-JSON response");
+    }
     return JSON.parse(match[0]) as T;
   }
 }
@@ -66,7 +74,7 @@ ${explanation.slice(0, 8000)}
     gaps?: string[];
     feedback?: string;
     nextStep?: string;
-  }>(prompt, "You are an expert tutor using the Feynman Technique. Be encouraging and precise.");
+  }>(prompt);
 
   return {
     score: Math.max(0, Math.min(100, Math.round(parsed.score ?? 0))),
@@ -82,37 +90,57 @@ export async function generateFlashcardsGroq(
   count = 10,
   locale: Locale = DEFAULT_LOCALE
 ): Promise<{ question: string; answer: string }[]> {
-  const prompt = `Create ${count} exam-focused flashcards on "${topic}" from the material below.
+  return generateStudyMaterialGroq("flashcards", topic, sourceMaterial, count, locale);
+}
+
+export async function generateQuizGroq(
+  topic: string,
+  sourceMaterial: string,
+  count = 5,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<any[]> {
+  return generateStudyMaterialGroq("quiz", topic, sourceMaterial, count, locale);
+}
+
+export async function generateStudyMaterialGroq(
+  mode: "flashcards" | "quiz",
+  topic: string,
+  sourceMaterial: string,
+  count: number,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<any[]> {
+  const flashcardSchema = `{"flashcards": [{"question": string, "answer": string}]}`;
+  const quizSchema = `{"quiz": [{"id": string, "question": string, "options": string[4], "correctAnswer": string, "explanation": string}]}`;
+  
+  const schema = mode === "flashcards" ? flashcardSchema : quizSchema;
+  const key = mode === "flashcards" ? "flashcards" : "quiz";
+
+  const prompt = `Create ${count} exam-focused ${mode} items on "${topic}" from the material below.
 
 MATERIAL:
 ---
-${sourceMaterial}
+${sourceMaterial.slice(0, 12000)}
 ---
 
 ${languageInstruction(locale)}
 
 CRITICAL QUALITY RULE: 
-NEVER generate meta-questions about the exam structure, question numbers, or paper layouts.
-ONLY generate subject-matter flashcards.
+NEVER generate meta-questions about the exam structure.
+ONLY generate subject-matter items.
 
-EXAMPLES OF FORBIDDEN META-QUESTIONS (DO NOT GENERATE THESE):
-- ❌ "Which topic is covered in question 1?"
-- ❌ "What is the recommended structure for Paper 3?"
-- ❌ "How many marks are allocated to section B?"
+Return JSON: ${schema}
+${mode === "quiz" ? 'Ensure "options" contains exactly 4 choices and "correctAnswer" matches one of them exactly.' : 'Answers must be at most 3 sentences and testable in an exam.'}`;
 
-EXAMPLES OF ALLOWED SUBJECT-MATTER FLASHCARDS (ALWAYS GENERATE THESE):
-- ✅ "What is the primary difference between a stack and a queue?"
-- ✅ "Define the term 'polymorphism' in object-oriented programming."
-- ✅ "What is the time complexity of a binary search algorithm?"
+  const parsed = await generateJson<any>(prompt);
+  const items = parsed[key] ?? [];
 
-Return JSON: {"cards": [{"question": string, "answer": string}]}
-Answers must be at most 3 sentences and testable in an exam.`;
-
-  const parsed = await generateJson<{ cards?: { question: string; answer: string }[] }>(
-    prompt,
-    "You are a flashcard architect. Create clear, concise, and highly testable questions and answers. Never ask about exam formatting."
-  );
-  return (parsed.cards ?? []).filter((c) => c.question && c.answer).slice(0, count);
+  if (mode === "flashcards") {
+    return items.filter((c: any) => c.question && c.answer).slice(0, count);
+  } else {
+    return items
+      .filter((q: any) => q.question && Array.isArray(q.options) && q.options.length === 4 && q.correctAnswer)
+      .slice(0, count);
+  }
 }
 
 export async function quickQuizGroq(
@@ -126,7 +154,7 @@ Return JSON: {"questions": [{"question": string, "options": string[4], "correctI
 
   const parsed = await generateJson<{
     questions?: { question: string; options: string[]; correctIndex: number }[];
-  }>(prompt, "You are a quiz master. Create high-quality, ultra-fast MCQ questions.");
+  }>(prompt);
 
   return (parsed.questions ?? []).slice(0, count);
 }
@@ -142,10 +170,7 @@ covering these topics: ${topics.join(", ")}.
 ${languageInstruction(locale)}
 Return JSON: {"title": string, "questions": [{"question": string, "options": string[4], "correctIndex": number, "explanation": string, "topic": string}]}`;
 
-  const parsed = await generateJson<{ title?: string; questions?: MockExamQuestion[] }>(
-    prompt,
-    "You are a rigorous exam board examiner. Create challenging but fair MCQ questions."
-  );
+  const parsed = await generateJson<{ title?: string; questions?: MockExamQuestion[] }>(prompt);
 
   return {
     title: parsed.title ?? `Mock exam: ${topics[0] ?? "General"}`,
