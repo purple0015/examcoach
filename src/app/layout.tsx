@@ -19,10 +19,18 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "ExamCoach | AI Study Companion",
+  title: {
+    default: "ExamCoach | AI Study Companion",
+    template: "%s | ExamCoach",
+  },
   description:
     "AI flashcards, mock exams and coaching in English, isiNdebele and chiShona — with streaks, goals and plan-based uploads.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
   appleWebApp: { capable: true, statusBarStyle: "default", title: "ExamCoach" },
 };
 
