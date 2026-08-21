@@ -62,7 +62,11 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? t.common.error);
+        if (data.error === "DOCUMENT_UNAVAILABLE") {
+          setError(t.common.documentUnavailable);
+        } else {
+          setError(data.error ?? t.common.error);
+        }
         return;
       }
       

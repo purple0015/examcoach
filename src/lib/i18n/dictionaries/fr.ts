@@ -26,6 +26,7 @@ export const fr: Dictionary = {
     today: "Aujourd'hui",
     week: "Cette semaine",
     error: "Une erreur est survenue",
+    documentUnavailable: "Ce document n'est plus disponible. Veuillez le supprimer et le télécharger à nouveau.",
     retry: "Réessayer",
     locked: "Verrouillé",
     free: "Gratuit",

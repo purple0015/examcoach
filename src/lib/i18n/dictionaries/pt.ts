@@ -26,6 +26,7 @@ export const pt: Dictionary = {
     today: "Hoje",
     week: "Esta semana",
     error: "Algo deu errado",
+    documentUnavailable: "Este documento não está mais disponível. Por favor, exclua-o e envie-o novamente.",
     retry: "Tentar novamente",
     locked: "Bloqueado",
     free: "Grátis",

@@ -65,6 +65,16 @@ export async function POST(req: Request) {
           { status: 422 }
         );
       }
+      if (err.message.startsWith("DOCUMENT_UNAVAILABLE")) {
+        const status = parseInt(err.message.split(":")[1]) || 422;
+        return NextResponse.json(
+          {
+            error: "DOCUMENT_UNAVAILABLE",
+            message: "The requested document could not be retrieved from cloud storage. Please re-upload the file.",
+          },
+          { status }
+        );
+      }
       console.error("Failed to fetch file content from fileUrl:", err);
     }
   }

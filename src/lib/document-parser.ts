@@ -3,6 +3,7 @@ const pdf = require("pdf-parse");
 const mammoth = require("mammoth");
 import fs from "fs";
 import path from "path";
+import { fetchRemoteFile } from "./fetch-remote-file";
 
 /**
  * Strips common exam boilerplate to prevent AI from focusing on meta-data.
@@ -56,10 +57,11 @@ export async function getDocumentText(fileUrl: string, filename: string): Promis
     let buffer: Buffer;
     
     if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
-      const res = await fetch(fileUrl);
-      if (!res.ok) throw new Error(`Failed to fetch remote file: ${res.statusText}`);
-      const arrayBuffer = await res.arrayBuffer();
-      buffer = Buffer.from(arrayBuffer);
+      const fetchResult = await fetchRemoteFile(fileUrl);
+      if (fetchResult.error || !fetchResult.data) {
+        throw new Error(`DOCUMENT_UNAVAILABLE:${fetchResult.status || 422}`);
+      }
+      buffer = fetchResult.data;
     } else {
       // Handle local:// or relative paths
       const relativePath = fileUrl.replace("local://", "");

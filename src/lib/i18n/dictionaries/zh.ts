@@ -26,6 +26,7 @@ export const zh: Dictionary = {
     today: "今天",
     week: "本周",
     error: "出现了一些错误",
+    documentUnavailable: "此文档已不再可用。请删除并重新上传。",
     retry: "重试",
     locked: "已锁定",
     free: "免费",

@@ -26,6 +26,7 @@ export const nd: Dictionary = {
     today: "Lamuhla",
     week: "Kuleliviki",
     error: "Kukhona okungahambanga kuhle",
+    documentUnavailable: "Ugwalalo lolu alusatholakali. Sicela ulucishe ubusuluphinda ulufake njalo.",
     retry: "Zama futhi",
     locked: "Kuvaliwe",
     free: "Mahala",

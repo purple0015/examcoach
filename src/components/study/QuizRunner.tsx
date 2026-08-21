@@ -38,7 +38,12 @@ export function QuizRunner() {
         body: JSON.stringify({ documentId: selectedDocId, topic: selectedTopic }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Generation failed");
+      if (!res.ok) {
+        if (data.error === "DOCUMENT_UNAVAILABLE") {
+          throw new Error(t.common.documentUnavailable);
+        }
+        throw new Error(data.error || "Generation failed");
+      }
       
       setQuestions(data.quiz);
       setStage("active");

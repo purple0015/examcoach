@@ -26,6 +26,7 @@ export const ar: Dictionary = {
     today: "اليوم",
     week: "هذا الأسبوع",
     error: "حدث خطأ ما",
+    documentUnavailable: "هذا المستند لم يعد متاحاً. يرجى حذفه وإعادة رفعه.",
     retry: "إعادة المحاولة",
     locked: "مغلق",
     free: "مجاني",

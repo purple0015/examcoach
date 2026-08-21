@@ -26,6 +26,7 @@ export const sw: Dictionary = {
     today: "Leo",
     week: "Wiki hii",
     error: "Kuna kitu kimeenda vibaya",
+    documentUnavailable: "Hati hii haipatikani tena. Tafadhali ifute na uipakie tena.",
     retry: "Jaribu tena",
     locked: "Imefungwa",
     free: "Bure",

@@ -26,6 +26,7 @@ export const sn: Dictionary = {
     today: "Nhasi",
     week: "Vhiki rino",
     error: "Pane chakakanganisika",
+    documentUnavailable: "Gwaro iri harichawanikwi. Ndapota ridzime ugozoisa zvakare.",
     retry: "Edza zvakare",
     locked: "Zvakavharwa",
     free: "Mahara",

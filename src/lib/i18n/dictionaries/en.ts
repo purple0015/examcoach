@@ -24,6 +24,7 @@ export const en = {
     today: "Today",
     week: "This week",
     error: "Something went wrong",
+    documentUnavailable: "This document is no longer available. Please delete and re-upload it.",
     retry: "Try again",
     locked: "Locked",
     free: "Free",
