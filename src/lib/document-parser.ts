@@ -6,37 +6,47 @@ import path from "path";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 /**
- * Sends raw document buffers directly to Gemini 1.5 Flash for native parsing.
+ * Sends raw document buffers directly to Gemini 1.5 Flash for native parsing with retry logic.
  */
 export async function extractTextWithGemini(
   fileBuffer: Buffer,
-  mimeType: string = "application/pdf"
+  mimeType: string = "application/pdf",
+  retries = 3
 ): Promise<string> {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const base64Data = fileBuffer.toString("base64");
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const base64Data = fileBuffer.toString("base64");
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          data: base64Data,
-          mimeType: mimeType,
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: mimeType,
+          },
         },
-      },
-      "You are an expert document parser. Extract all core educational content from this file while stripping candidate instructions, metadata, and exam boilerplate. Return clean Markdown.",
-    ]);
+        "Extract all educational content from this file. Strip instructions and boilerplate. Return clean Markdown.",
+      ]);
 
-    const extractedText = result.response.text();
+      const extractedText = result.response.text();
+      if (!extractedText || extractedText.trim().length < 50) {
+        throw new Error("INSUFFICIENT_TEXT");
+      }
 
-    if (!extractedText || extractedText.trim().length < 50) {
-      throw new Error("INSUFFICIENT_TEXT");
+      return extractedText;
+    } catch (error: any) {
+      const is503 = error?.status === 503 || error?.message?.includes("503");
+      if (is503 && attempt < retries) {
+        console.warn(`[Gemini Extraction] Received 503. Retrying (${attempt}/${retries})...`);
+        await new Promise((resolve) => setTimeout(resolve, attempt * 2000)); // Delay 2s, 4s...
+        continue;
+      }
+      console.error(`Gemini Extraction failed on attempt ${attempt}:`, error);
+      throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
     }
-
-    return extractedText;
-  } catch (error) {
-    console.error("Gemini Native Extraction Error:", error);
-    throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
   }
+
+  throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
 }
 
 /**
