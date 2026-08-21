@@ -13,7 +13,7 @@ export async function extractTextWithGemini(
   mimeType: string = "application/pdf"
 ): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const base64Data = fileBuffer.toString("base64");
 
     const result = await model.generateContent([
@@ -23,7 +23,7 @@ export async function extractTextWithGemini(
           mimeType: mimeType,
         },
       },
-      `You are an expert document parser. Extract all core educational content from this file while stripping candidate instructions, metadata, and exam boilerplate. Return clean Markdown.`,
+      "You are an expert document parser. Extract all core educational content from this file while stripping candidate instructions, metadata, and exam boilerplate. Return clean Markdown.",
     ]);
 
     const extractedText = result.response.text();
