@@ -24,6 +24,9 @@ export async function fetchRemoteFile(fileUrl: string): Promise<FileFetchResult>
       signal: controller.signal,
       headers: {
         'User-Agent': 'ExamCoach/1.0',
+        ...(process.env.BLOB_READ_WRITE_TOKEN && {
+          'Authorization': `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}`
+        })
       }
     });
     
