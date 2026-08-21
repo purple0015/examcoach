@@ -1,12 +1,12 @@
 // @ts-ignore
-import pdf from "pdf-parse";
+import * as pdf from "pdf-parse";
 const mammoth = require("mammoth");
 import fs from "fs";
 import path from "path";
 import { fetchRemoteFile } from "./fetch-remote-file";
 
 // Robust import for pdf-parse to handle different bundle targets
-const parsePdf = typeof pdf === "function" ? pdf : (pdf as any).default;
+const parsePdf = typeof pdf === "function" ? pdf : (pdf as any).default || require("pdf-parse");
 
 /**
  * Strips common exam boilerplate to prevent AI from focusing on meta-data.

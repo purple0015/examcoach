@@ -33,6 +33,24 @@ export function ActiveRecallSession() {
       .then((data) => setDocuments(data));
   }, []);
 
+  const finishSession = useCallback(async () => {
+    setStage("result");
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    // Auto-log session
+    const duration = Math.ceil((Date.now() - startTime) / 60000);
+    const doc = documents.find((d) => d.id === selectedDocId);
+    void fetch("/api/study-sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        method: "active_recall",
+        durationMin: Math.max(1, duration),
+        topics: [selectedTopic || doc?.topics[0] || "General"],
+      }),
+    });
+  }, [startTime, documents, selectedDocId, selectedTopic]);
+
   const nextQuestion = useCallback(() => {
     if (currentIdx < prompts.length - 1) {
       setCurrentIdx((prev) => prev + 1);
@@ -40,16 +58,24 @@ export function ActiveRecallSession() {
       setUserAnswers("");
       setIsPaused(false);
     } else {
-      finishSession();
+      void finishSession();
     }
-  }, [currentIdx, prompts.length]);
+  }, [currentIdx, prompts.length, finishSession]);
+
+  const handleTimeout = useCallback(() => {
+    const currentPrompt = prompts[currentIdx];
+    if (!currentPrompt) return;
+    setResults((prev) => [...prev, { id: currentPrompt.id, correct: false, responseTime: RECALL_TIME_LIMIT }]);
+    setIsPaused(true);
+    setTimeout(nextQuestion, 1500);
+  }, [currentIdx, nextQuestion, prompts]);
 
   useEffect(() => {
     if (stage === "active" && !isPaused) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 0.1) {
-            clearInterval(timerRef.current!);
+            if (timerRef.current) clearInterval(timerRef.current);
             handleTimeout();
             return 0;
           }
@@ -60,7 +86,7 @@ export function ActiveRecallSession() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [stage, currentIdx, isPaused]);
+  }, [stage, isPaused, handleTimeout]);
 
   async function startSession() {
     if (!selectedDocId && !selectedTopic) return;
@@ -92,13 +118,6 @@ export function ActiveRecallSession() {
     }
   }
 
-  function handleTimeout() {
-    const currentPrompt = prompts[currentIdx];
-    setResults((prev) => [...prev, { id: currentPrompt.id, correct: false, responseTime: RECALL_TIME_LIMIT }]);
-    setIsPaused(true);
-    setTimeout(nextQuestion, 1500);
-  }
-
   function submitAnswer(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (isPaused || !userInput.trim()) return;
@@ -111,30 +130,12 @@ export function ActiveRecallSession() {
     
     // Rapid fire scoring: direct inclusion or similarity
     const isCorrect = 
-      userInput.toLowerCase().trim() === currentPrompt.answer.toLowerCase().trim() ||
-      currentPrompt.answer.toLowerCase().split(' ').some(word => userInput.toLowerCase().includes(word));
+      userInput.toLowerCase().trim() === (currentPrompt?.answer || "").toLowerCase().trim() ||
+      (currentPrompt?.answer || "").toLowerCase().split(' ').some(word => userInput.toLowerCase().includes(word));
 
-    setResults((prev) => [...prev, { id: currentPrompt.id, correct: isCorrect, responseTime }]);
+    setResults((prev) => [...prev, { id: currentPrompt?.id || "", correct: isCorrect, responseTime }]);
     
     setTimeout(nextQuestion, 1200);
-  }
-
-  async function finishSession() {
-    setStage("result");
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    // Auto-log session
-    const duration = Math.ceil((Date.now() - startTime) / 60000);
-    const doc = documents.find(d => d.id === selectedDocId);
-    void fetch("/api/study-sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        method: "active_recall",
-        durationMin: Math.max(1, duration),
-        topics: [selectedTopic || doc?.topics[0] || "General"],
-      }),
-    });
   }
 
   if (stage === "setup") {
@@ -251,7 +252,7 @@ export function ActiveRecallSession() {
                 ) : (
                   <>
                     <XCircle className="h-16 w-16 text-red-500 mb-2" />
-                    <p className="text-xl font-bold text-red-600">Time's Up! or Incorrect</p>
+                    <p className="text-xl font-bold text-red-600">Time&apos;s Up! or Incorrect</p>
                     <p className="mt-1 text-brand-text-primary">Answer: <span className="font-bold underline">{currentPrompt.answer}</span></p>
                   </>
                 )}
