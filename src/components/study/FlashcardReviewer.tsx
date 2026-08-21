@@ -44,22 +44,30 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaced]);
 
-  async function generate(documentId: string) {
+  async function generate(documentId: string, topic?: string) {
     setGenerating(true);
     setError("");
     try {
       const res = await fetch("/api/gemini/generate-flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId }),
+        body: JSON.stringify({ documentId, topic }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
         setError(data.error ?? t.common.error);
         return;
       }
-      await loadCards();
-      setIndex(0);
+      
+      if (data.flashcards) {
+        setCards(data.flashcards);
+        setIndex(0);
+        setRevealed(false);
+      } else {
+        await loadCards();
+      }
+    } catch {
+      setError(t.common.error);
     } finally {
       setGenerating(false);
     }
@@ -96,7 +104,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
                 key={doc.id}
                 type="button"
                 disabled={generating}
-                onClick={() => void generate(doc.id)}
+                onClick={() => void generate(doc.id, doc.topics[0])}
                 className="btn-secondary w-full justify-between"
               >
                 <span className="truncate">{doc.filename}</span>
@@ -150,14 +158,24 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
         ))}
         <button
           type="button"
+          disabled={generating}
           onClick={() => {
-            setRevealed(false);
-            setIndex(0);
+            const currentCard = cards[index];
+            if (currentCard?.documentId) {
+              void generate(currentCard.documentId, currentCard.topic);
+            } else {
+              setRevealed(false);
+              setIndex(0);
+            }
           }}
           className="btn-ghost ml-auto"
         >
-          <RotateCcw className="mr-1 h-4 w-4" aria-hidden />
-          {t.common.retry}
+          {generating ? (
+            <LoadingSpinner size="sm" className="mr-2" />
+          ) : (
+            <RotateCcw className="mr-1 h-4 w-4" aria-hidden />
+          )}
+          {generating ? t.common.loading : t.common.retry}
         </button>
       </div>
     </div>

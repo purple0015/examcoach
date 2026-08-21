@@ -164,6 +164,7 @@ export interface DocumentSummary {
 
 export interface FlashcardItem {
   id: string;
+  documentId?: string | null;
   topic: string;
   question: string;
   answer: string;
