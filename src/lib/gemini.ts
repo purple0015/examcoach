@@ -63,14 +63,28 @@ ${content.slice(0, 20000)}
 
 export async function generateFlashcards(
   topic: string,
-  sourceName: string,
+  sourceMaterial: string,
   count = 10,
   locale: Locale = DEFAULT_LOCALE
 ): Promise<{ question: string; answer: string }[]> {
-  const prompt = `Create ${count} exam-focused flashcards on "${topic}" from the material "${sourceName}".
+  const prompt = `You are an expert educational tutor creating study flashcards.
+
+Target Topic: "${topic}"
+
+Study Material Context:
+---
+${sourceMaterial}
+---
+
 ${languageInstruction(locale)}
+
+STRICT RULES:
+1. Generate exactly ${count} flashcards testing academic and technical knowledge found in the study material.
+2. DO NOT ask meta-questions about the paper format, section layouts, mark schemes, or answer structure (e.g., DO NOT ask "What is the structure of Paper 3?").
+3. Focus purely on subject definitions, algorithms, pseudocode, concepts, and problem-solving steps.
+
 Return JSON: {"cards": [{"question": string, "answer": string}]}
-Answers must be at most 3 sentences and testable in an exam.`;
+Answers must be concise (at most 3 sentences) and clear.`;
 
   const parsed = await generateJson<{ cards?: { question: string; answer: string }[] }>(prompt);
   return (parsed.cards ?? []).filter((c) => c.question && c.answer).slice(0, count);
