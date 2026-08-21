@@ -4,7 +4,7 @@ import { ChangeEvent, DragEvent, useCallback, useEffect, useRef, useState } from
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AlertTriangle, CheckCircle2, FileText, Trash2, UploadCloud, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileText, Sparkles, Trash2, UploadCloud, X } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -25,6 +25,9 @@ export default function UploadPage() {
   const [dragging, setDragging] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<{ id: string; content: string; keyTopics: string[] } | null>(null);
 
   const load = useCallback(async () => {
     const [quotaRes, docsRes] = await Promise.all([fetch("/api/upload"), fetch("/api/documents")]);
@@ -67,6 +70,25 @@ export default function UploadPage() {
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function handleSummarize(documentId: string) {
+    setSummarizingId(documentId);
+    setError("");
+    try {
+      const res = await fetch("/api/gemini/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to summarize");
+      setSummary({ id: documentId, content: data.summary, keyTopics: data.keyTopics });
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSummarizingId(null);
     }
   }
 
@@ -220,14 +242,47 @@ export default function UploadPage() {
         ) : (
           <ul className="mt-3 space-y-2">
             {documents.map((doc) => (
-              <li key={doc.id} className="card flex items-start gap-3 py-3">
-                <FileText className="mt-1 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{doc.filename}</p>
-                  <p className="text-xs text-brand-text-secondary dark:text-slate-400">
-                    {t.upload.topics}: {doc.topics.join(", ") || "—"}
-                  </p>
+              <li key={doc.id} className="card py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <FileText className="mt-1 h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{doc.filename}</p>
+                      <p className="text-xs text-brand-text-secondary dark:text-slate-400">
+                        {t.upload.topics}: {doc.topics.join(", ") || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleSummarize(doc.id)}
+                    disabled={summarizingId === doc.id}
+                    className="btn-secondary py-1 px-3 text-xs flex items-center gap-2 shrink-0"
+                  >
+                    {summarizingId === doc.id ? <LoadingSpinner size="sm" /> : <Sparkles size={12} />}
+                    Summarize
+                  </button>
                 </div>
+
+                {summary?.id === doc.id && (
+                  <div className="mt-3 p-3 bg-primary-50 dark:bg-primary-950/20 rounded-lg border border-primary-100 dark:border-primary-900/30 animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-primary-700 dark:text-primary-400">AI Summary</h4>
+                      <button onClick={() => setSummary(null)} className="text-brand-text-secondary hover:text-brand-text-primary">
+                        <X size={12} />
+                      </button>
+                    </div>
+                    <p className="text-sm whitespace-pre-line text-brand-text-primary mb-3">
+                      {summary.content}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {summary.keyTopics.map((topic, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-white dark:bg-slate-800 rounded text-[10px] font-medium border border-primary-200 dark:border-primary-800">
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

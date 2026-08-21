@@ -50,6 +50,12 @@ export async function POST(req: Request) {
     try {
       documentContext = await getDocumentText(doc.fileUrl, doc.filename);
     } catch (err: any) {
+      if (err.message === "FAILED_TO_EXTRACT_DOCUMENT_TEXT") {
+        return NextResponse.json(
+          { error: "FAILED_TO_EXTRACT_DOCUMENT_TEXT", message: "Could not parse document text. The file may be corrupt or protected." },
+          { status: 500 }
+        );
+      }
       if (err.message === "INSUFFICIENT_TEXT") {
         return NextResponse.json(
           { error: "Could not extract text from document. Please upload a searchable PDF." },

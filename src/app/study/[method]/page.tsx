@@ -13,6 +13,7 @@ import { FeynmanCoach } from "@/components/study/FeynmanCoach";
 import { PomodoroTimer } from "@/components/study/PomodoroTimer";
 import { MockExamRunner } from "@/components/study/MockExamRunner";
 import { QuizRunner } from "@/components/study/QuizRunner";
+import { ActiveRecallSession } from "@/components/study/ActiveRecallSession";
 import { GuidedWorkspace } from "@/components/study/GuidedWorkspace";
 import { SessionLogger } from "@/components/study/SessionLogger";
 import { WeaknessHeatmap } from "@/components/dashboard/WeaknessHeatmap";
@@ -92,11 +93,11 @@ export default function StudyMethodPage({ params }: { params: { method: string }
           {method.id === "mock_exam" && <MockExamRunner />}
           {method.id === "past_paper_drill" && <MockExamRunner pastPaperMode />}
           {method.id === "quiz" && <QuizRunner />}
+          {method.id === "active_recall" && <ActiveRecallSession />}
           {method.id === "cohort_analytics" && (
             <WeaknessHeatmap cells={stats?.weaknessMatrix ?? []} />
           )}
           {[
-            "active_recall",
             "cornell_notes",
             "blurting",
             "mind_map",

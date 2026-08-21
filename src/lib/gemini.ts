@@ -230,6 +230,62 @@ ${content.slice(0, 10000)}
   };
 }
 
+export async function generateRapidRecall(
+  topic: string,
+  sourceMaterial: string,
+  count = 10,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<{ id: string; prompt: string; answer: string; hints: string[] }[]> {
+  const prompt = `You are an expert tutor creating "Rapid Fire" recall prompts.
+These prompts are designed for 4-second response times.
+
+Target Topic: "${topic}"
+
+Material Context:
+---
+${sourceMaterial.slice(0, 15000)}
+---
+
+${languageInstruction(locale)}
+
+STRICT RULES:
+1. Generate exactly ${count} bite-sized recall prompts.
+2. The ANSWER must be exactly 1 to 3 words max.
+3. Prompts should be direct and test single concepts/facts.
+4. Provide 2-3 short hints for each prompt.
+
+Return JSON: {"recalls": [{"id": string, "prompt": string, "answer": string, "hints": string[]}]}
+`;
+
+  const parsed = await generateJson<{ recalls?: { id: string; prompt: string; answer: string; hints: string[] }[] }>(
+    prompt
+  );
+  return (parsed.recalls ?? []).slice(0, count);
+}
+
+export async function summarizeDocument(
+  filename: string,
+  content: string,
+  locale: Locale = DEFAULT_LOCALE
+): Promise<{ summary: string; keyTopics: string[] }> {
+  const prompt = `Summarize the following document for study purposes.
+${languageInstruction(locale)}
+Return JSON: {"summary": string, "keyTopics": string[]}
+- summary: exactly 3 bullet points.
+- keyTopics: list of 5-8 core academic topics.
+
+DOCUMENT: ${filename}
+"""
+${content.slice(0, 15000)}
+"""`;
+
+  const parsed = await generateJson<{ summary?: string; keyTopics?: string[] }>(prompt);
+  return {
+    summary: parsed.summary ?? "",
+    keyTopics: parsed.keyTopics ?? [],
+  };
+}
+
 export function isGeminiConfigured(): boolean {
   return !!process.env.GEMINI_API_KEY;
 }

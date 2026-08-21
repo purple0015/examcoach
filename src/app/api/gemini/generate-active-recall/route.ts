@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDocumentText } from "@/lib/document-parser";
-import { generateQuizGroq, isGroqConfigured } from "@/lib/groq";
+import { generateRapidRecall } from "@/lib/gemini";
+import { getUserTier } from "@/lib/subscription";
+import { isMethodAllowed } from "@/lib/study-methods";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -11,11 +13,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!isGroqConfigured()) {
-    return NextResponse.json(
-      { error: "Quiz generation is currently unavailable (API not configured)" },
-      { status: 503 }
-    );
+  const tier = await getUserTier(session.user.id);
+  if (!isMethodAllowed(tier, "active_recall")) {
+    return NextResponse.json({ error: "Active recall is not available on your plan" }, { status: 403 });
   }
 
   try {
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     if (!documentId && !topic) {
       return NextResponse.json(
-        { error: "Provide a documentId or a topic to generate a quiz" },
+        { error: "Provide a documentId or a topic to generate recall prompts" },
         { status: 400 }
       );
     }
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         }
         if (err.message === "INSUFFICIENT_TEXT") {
           return NextResponse.json(
-            { error: "This document is too short to generate a meaningful quiz." },
+            { error: "This document is too short to generate meaningful recall prompts." },
             { status: 400 }
           );
         }
@@ -81,40 +81,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // Use Groq to generate the quiz
-    // If no sourceMaterial, it will generate a general quiz based on the topic string
-    const quizItems = await generateQuizGroq(
+    const recalls = await generateRapidRecall(
       finalTopic,
       sourceMaterial || `General knowledge about ${finalTopic}`,
-      count || 5,
+      count || 10,
       session.user.locale
     );
 
-    if (!quizItems || quizItems.length === 0) {
-      return NextResponse.json(
-        { error: "Failed to generate quiz questions. Try a different topic or document." },
-        { status: 500 }
-      );
-    }
-
-    // Store the generated quiz questions in Prisma for later review/analytics
-    await prisma.quizQuestion.createMany({
-      data: quizItems.map((q: any) => ({
-        userId: session.user.id,
-        documentId: documentId || null,
-        topic: finalTopic,
-        question: q.question,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-        explanation: q.explanation || "",
-      })),
-    });
-
-    return NextResponse.json({ quiz: quizItems });
+    return NextResponse.json({ recalls });
   } catch (error: any) {
-    console.error("Quiz generation error:", error);
+    console.error("Rapid Recall generation error:", error);
     return NextResponse.json(
-      { error: "An error occurred while generating your quiz." },
+      { error: "An error occurred while generating your recall session." },
       { status: 500 }
     );
   }

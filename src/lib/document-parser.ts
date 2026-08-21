@@ -1,9 +1,12 @@
 // @ts-ignore
-const pdf = require("pdf-parse");
+import pdf from "pdf-parse";
 const mammoth = require("mammoth");
 import fs from "fs";
 import path from "path";
 import { fetchRemoteFile } from "./fetch-remote-file";
+
+// Robust import for pdf-parse to handle different bundle targets
+const parsePdf = typeof pdf === "function" ? pdf : (pdf as any).default;
 
 /**
  * Strips common exam boilerplate to prevent AI from focusing on meta-data.
@@ -38,14 +41,22 @@ function sanitizeContent(text: string): string {
  */
 async function extractTextFromBuffer(buffer: Buffer, filename: string): Promise<string> {
   const ext = filename.toLowerCase();
-  if (ext.endsWith(".pdf")) {
-    const data = await pdf(buffer);
-    return data.text || "";
-  } else if (ext.endsWith(".docx")) {
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value || "";
-  } else {
-    return buffer.toString("utf-8");
+  try {
+    if (ext.endsWith(".pdf")) {
+      if (typeof parsePdf !== "function") {
+        throw new Error("PDF_PARSER_NOT_INITIALIZED");
+      }
+      const data = await parsePdf(buffer);
+      return data.text || "";
+    } else if (ext.endsWith(".docx")) {
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value || "";
+    } else {
+      return buffer.toString("utf-8");
+    }
+  } catch (err) {
+    console.error(`Extraction failed for ${filename}:`, err);
+    throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
   }
 }
 

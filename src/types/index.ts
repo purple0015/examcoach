@@ -189,3 +189,10 @@ export interface QuizQuestion {
   correctAnswer: string;
   explanation: string;
 }
+
+export interface RecallPrompt {
+  id: string;
+  prompt: string;
+  answer: string;
+  hints: string[];
+}
