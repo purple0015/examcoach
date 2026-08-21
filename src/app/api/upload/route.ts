@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const blob = await put(`uploads/${session.user.id}/${Date.now()}-${file.name}`, file, {
-          access: "public",
+          access: "private",
         });
         fileUrl = blob.url;
       } catch (blobError) {
