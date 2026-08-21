@@ -117,8 +117,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     paddingTop: 10,
+  },
+  footerBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  copyright: {
+    fontSize: 7,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   confidential: {
     fontSize: 8,
@@ -199,10 +208,13 @@ export const BatchExportPDF = ({ orgName, orgPrefix, ids }: BatchExportPDFProps)
       </View>
 
       <View style={styles.footer} fixed>
-        <Text style={styles.confidential}>Confidential - For internal school distribution only.</Text>
-        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
-          `Page ${pageNumber} of ${totalPages}`
-        )} />
+        <Text style={styles.copyright}>© 2026 Axiom Neural Systems by Silothomba. All rights reserved.</Text>
+        <View style={styles.footerBottom}>
+          <Text style={styles.confidential}>Confidential - For internal school distribution only.</Text>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+            `Page ${pageNumber} of ${totalPages}`
+          )} />
+        </View>
       </View>
     </Page>
   </Document>
