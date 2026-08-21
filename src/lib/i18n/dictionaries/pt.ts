@@ -143,6 +143,12 @@ export const pt: Dictionary = {
     noUploads: "Nada enviado ainda.",
     upgradeForMore: "Atualize para mais uploads",
     topics: "Tópicos",
+    resetUploads: "Redefinir todos os uploads",
+    resetUploadsTitle: "Redefinir todos os uploads?",
+    resetUploadsDesc: "Isso excluirá permanentemente todos os seus arquivos enviados e materiais de estudo gerados. Esta ação não pode ser desfeita.",
+    resetUploadsWarning: "Nota: Isso NÃO restaurará nem redefinirá o limite de cota de upload da sua conta.",
+    resetUploadsConfirm: "Sim, excluir tudo",
+    resetUploadsSuccess: "Todos los documentos eliminados. La cuota de subida permanece sin cambios.",
   },
   study: {
     title: "Métodos de estudo",

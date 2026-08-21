@@ -147,6 +147,12 @@ export const sn: Dictionary = {
     noUploads: "Hapana chakaiswa.",
     upgradeForMore: "Kwidziridza uwane zvakawanda",
     topics: "Misoro",
+    resetUploads: "Dzima zvese zvakaiswa",
+    resetUploadsTitle: "Dzima zvese zvakaiswa?",
+    resetUploadsDesc: "Izvi zvichadzima zvachose mafaira ako ese awakaisa nezvinhu zvekudzidza zvakagadzirwa. Izvi hazvigone kudzoserwa shure.",
+    resetUploadsWarning: "Cherechedza: Izvi HAAZVIDZORERE kana kugadzirisa muganho wekuisa weakaunti yako.",
+    resetUploadsConfirm: "Hongu, Dzima Zvese",
+    resetUploadsSuccess: "Magwaro ese adzimwa. Muganho wekuisa hauna kuchinjwa.",
   },
   study: {
     title: "Nzira dzekudzidza",

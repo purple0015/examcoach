@@ -143,6 +143,12 @@ export const sw: Dictionary = {
     noUploads: "Hakuna kilichopakiwa bado.",
     upgradeForMore: "Boresha kwa upakiaji zaidi",
     topics: "Mada",
+    resetUploads: "Weka upya upakiaji wote",
+    resetUploadsTitle: "Weka upya upakiaji wote?",
+    resetUploadsDesc: "Hii itafuta kabisa faili zako zote zilizopakiwa na nyenzo za kusoma zilizotengenezwa. Kitendo hiki hakiwezi kutenguliwa.",
+    resetUploadsWarning: "Kumbuka: Hii HAITA rudisha au kuweka upya kikomo cha upakiaji wa akaunti yako.",
+    resetUploadsConfirm: "Ndiyo, Futa Kila Kitu",
+    resetUploadsSuccess: "Nyaraka zote zimeondolewa. Kiwango cha upakiaji kinabaki bila kubadilika.",
   },
   study: {
     title: "Mbinu za kusoma",

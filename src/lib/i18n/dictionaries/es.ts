@@ -143,6 +143,12 @@ export const es: Dictionary = {
     noUploads: "Nada subido todavía.",
     upgradeForMore: "Actualiza para más subidas",
     topics: "Temas",
+    resetUploads: "Restablecer todas las subidas",
+    resetUploadsTitle: "¿Restablecer todas las subidas?",
+    resetUploadsDesc: "Esto eliminará permanentemente todos tus archivos subidos y los materiales de estudio generados. Esta acción no se puede deshacer.",
+    resetUploadsWarning: "Nota: Esto NO restaurará ni restablecerá el límite de cuota de subida de tu cuenta.",
+    resetUploadsConfirm: "Sí, eliminar todo",
+    resetUploadsSuccess: "Todos los documentos eliminados. La cuota de subida permanece sin cambios.",
   },
   study: {
     title: "Métodos de estudio",

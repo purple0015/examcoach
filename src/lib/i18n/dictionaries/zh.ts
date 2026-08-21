@@ -142,6 +142,12 @@ export const zh: Dictionary = {
     noUploads: "尚未上传任何内容。",
     upgradeForMore: "升级以获取更多上传次数",
     topics: "主题",
+    resetUploads: "重置所有上传",
+    resetUploadsTitle: "重置所有上传？",
+    resetUploadsDesc: "这将永久删除您上传的所有文件和生成的学习资料。此操作无法撤销。",
+    resetUploadsWarning: "注意：这不会恢复或重置您账户的上传配额限制。",
+    resetUploadsConfirm: "是的，删除所有内容",
+    resetUploadsSuccess: "所有文档已移除。上传配额保持不变。",
   },
   study: {
     title: "学习方法",

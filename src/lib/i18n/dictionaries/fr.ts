@@ -143,6 +143,12 @@ export const fr: Dictionary = {
     noUploads: "Rien n'a encore été téléchargé.",
     upgradeForMore: "Passez au plan supérieur pour plus de téléchargements",
     topics: "Sujets",
+    resetUploads: "Réinitialiser tous les téléchargements",
+    resetUploadsTitle: "Réinitialiser tous les téléchargements ?",
+    resetUploadsDesc: "Cela supprimera définitivement tous vos fichiers téléchargés et les supports d'étude générés. Cette action est irréversible.",
+    resetUploadsWarning: "Remarque : Cela NE restaurera NI ne réinitialisera la limite de quota de téléchargement de votre compte.",
+    resetUploadsConfirm: "Oui, tout supprimer",
+    resetUploadsSuccess: "Tous les documents ont été supprimés. Le quota de téléchargement reste inchangé.",
   },
   study: {
     title: "Méthodes d'étude",

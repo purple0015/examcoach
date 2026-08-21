@@ -147,6 +147,12 @@ export const nd: Dictionary = {
     noUploads: "Akulalutho olulayishiweyo.",
     upgradeForMore: "Thuthukisa uthole okunengi",
     topics: "Izihloko",
+    resetUploads: "Susa konke okulayishiweyo",
+    resetUploadsTitle: "Susa konke okulayishiweyo?",
+    resetUploadsDesc: "Lokhu kuzasusa unomphela wonke amafayela akho owalayishileyo lezinto zokufunda eziwenzileyo. Lokhu ngeke kuhlehliswe.",
+    resetUploadsWarning: "Qaphela: Lokhu NGEKE kubuyisele kumbe kulungise inani lokulayisha kwakhawunti yakho.",
+    resetUploadsConfirm: "Yebo, Susa Konke",
+    resetUploadsSuccess: "Wonke amadokhumenti asusiwe. Inani lokulayisha alizange litshintshe.",
   },
   study: {
     title: "Izindlela zokufunda",
