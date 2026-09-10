@@ -153,6 +153,7 @@ export const sw: Dictionary = {
   },
   study: {
     title: "Mbinu za kusoma",
+    logSession: "Maendeleo ya kipindi",
     subtitle: "Chagua mbinu. Kila moja imerekebishwa kulingana na muda na nguvu ulizo nazo.",
     available: "Inapatikana kwenye mpango wako",
     lockedTitle: "Fungua mbinu zaidi",

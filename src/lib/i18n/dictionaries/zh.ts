@@ -152,6 +152,7 @@ export const zh: Dictionary = {
   },
   study: {
     title: "学习方法",
+    logSession: "会话进度",
     subtitle: "选择一种方法。每种方法都根据您的时间和精力进行了调整。",
     available: "您的方案可用",
     lockedTitle: "解锁更多方法",

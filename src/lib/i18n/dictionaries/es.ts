@@ -153,6 +153,7 @@ export const es: Dictionary = {
   },
   study: {
     title: "Métodos de estudio",
+    logSession: "Progreso de la sesión",
     subtitle: "Elige un método. Cada uno está ajustado a cuánto tiempo y energía tienes.",
     available: "Disponible en tu plan",
     lockedTitle: "Desbloquea más métodos",

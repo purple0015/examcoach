@@ -157,6 +157,7 @@ export const sn: Dictionary = {
   },
   study: {
     title: "Nzira dzekudzidza",
+    logSession: "Kufambira mberi kwechikamu",
     subtitle: "Sarudza nzira. Imwe neimwe yakaenderana nenguva nesimba raunaro.",
     available: "Zviripo pachirongwa chako",
     lockedTitle: "Vhura dzimwe nzira",

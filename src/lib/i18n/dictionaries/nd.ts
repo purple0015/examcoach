@@ -157,6 +157,7 @@ export const nd: Dictionary = {
   },
   study: {
     title: "Izindlela zokufunda",
+    logSession: "Ukuthuthuka kweseshini",
     subtitle: "Khetha indlela. Yonke ilungiselelwe isikhathi lamandla olawo.",
     available: "Kuyatholakala kuphakheji yakho",
     lockedTitle: "Vula ezinye izindlela",

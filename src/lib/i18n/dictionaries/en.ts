@@ -151,6 +151,7 @@ export const en = {
   },
   study: {
     title: "Study methods",
+    logSession: "Session Progress",
     subtitle: "Pick a method. Each one is tuned to how much time and energy you have.",
     available: "Available on your plan",
     lockedTitle: "Unlock more methods",

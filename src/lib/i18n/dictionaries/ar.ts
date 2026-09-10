@@ -153,6 +153,7 @@ export const ar: Dictionary = {
   },
   study: {
     title: "طرق الدراسة",
+    logSession: "تقدم الجلسة",
     subtitle: "اختر طريقة. كل واحدة مضبوطة حسب الوقت والطاقة المتوفرين لديك.",
     available: "متوفر في خطتك",
     lockedTitle: "فتح المزيد من الطرق",

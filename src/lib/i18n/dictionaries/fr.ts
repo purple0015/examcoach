@@ -153,6 +153,7 @@ export const fr: Dictionary = {
   },
   study: {
     title: "Méthodes d'étude",
+    logSession: "Progrès de la session",
     subtitle: "Choisissez une méthode. Chacune est adaptée à votre temps et à votre énergie.",
     available: "Disponible dans votre plan",
     lockedTitle: "Débloquez plus de méthodes",
