@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Star } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { StudyMethodId } from "@/types";
 
@@ -16,6 +17,7 @@ export function SessionLogger({
 }) {
   const { t } = useI18n();
   const [minutes, setMinutes] = useState(defaultMinutes);
+  const [xpEarned, setXpEarned] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -30,6 +32,8 @@ export function SessionLogger({
         body: JSON.stringify({ method, durationMin: minutes, topics: topic ? [topic] : [] }),
       });
       if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      setXpEarned(data.xpEarned);
       setSaved(true);
     } catch {
       setError(t.common.error);
@@ -58,9 +62,17 @@ export function SessionLogger({
         </button>
       </div>
       {saved && (
-        <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">
-          {t.study.sessionLogged}
-        </p>
+        <div className="mt-3 space-y-2">
+          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+            {t.study.sessionLogged}
+          </p>
+          {xpEarned !== null && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-bold dark:bg-primary-950/30 dark:text-primary-400 border border-primary-100 dark:border-primary-900/50">
+              <Star className="h-3.5 w-3.5 fill-current text-accent-500" />
+              {t.study.xpEarned.replace("{amount}", xpEarned.toString())}
+            </div>
+          )}
+        </div>
       )}
       {error && (
         <p role="alert" className="mt-3 text-sm text-red-600 dark:text-red-400">

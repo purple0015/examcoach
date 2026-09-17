@@ -121,6 +121,7 @@ export interface DashboardStats {
   weaknessMatrix: WeaknessCell[];
   last14Days: DailyActivity[];
   studiedToday: boolean;
+  xp: number;
 }
 
 export interface AdminStats {

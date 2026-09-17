@@ -19,7 +19,7 @@ export async function GET() {
   const userId = session.user.id;
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
 
-  const [sessions, goal, quizResults, flashcardCount, docCount, mockExamCount] = await Promise.all([
+  const [sessions, goal, quizResults, flashcardCount, docCount, mockExamCount, user] = await Promise.all([
     prisma.studySession.findMany({
       where: { userId },
       select: { date: true, durationMin: true, topicsStudied: true },
@@ -29,6 +29,7 @@ export async function GET() {
     prisma.flashcard.count({ where: { userId } }),
     prisma.document.count({ where: { userId } }),
     prisma.mockExam.count({ where: { userId } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { xp: true } }),
   ]);
 
   const dailyGoal = goal?.dailyMinutes ?? 20;
@@ -101,6 +102,7 @@ export async function GET() {
     weaknessMatrix,
     last14Days,
     studiedToday: minutesToday > 0,
+    xp: user?.xp ?? 0,
   };
 
   return NextResponse.json(stats);

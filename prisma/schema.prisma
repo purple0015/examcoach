@@ -17,6 +17,7 @@ model User {
   role          String    @default("user") // "user" | "admin"
   locale        String    @default("en") // "en" | "nd" | "sn"
   theme         String    @default("system") // "light" | "dark" | "system"
+  xp            Int       @default(0)
   orgId         String?
   orgIdCode     String?   @unique
   resetCode     String?

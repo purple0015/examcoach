@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CheckCircle2, Star } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,8 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
   const [topicInput, setTopicInput] = useState("");
   const [exam, setExam] = useState<GeneratedExam | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
+  const [xpEarned, setXpEarned] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState<number>(0);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,6 +56,8 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
       const generated = (data as { exam: GeneratedExam }).exam;
       setExam(generated);
       setAnswers(new Array(generated.questions.length).fill(-1));
+      setStartTime(Date.now());
+      setXpEarned(null);
     } catch {
       setError(t.common.error);
     } finally {
@@ -66,6 +71,7 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
     const score = Math.round((correct / exam.questions.length) * 100);
     setSubmitted(true);
 
+    // Save result
     await fetch("/api/quiz-results", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -77,6 +83,27 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
         mockExamId: exam.id,
       }),
     });
+
+    // Log study session and award XP
+    const duration = Math.ceil((Date.now() - startTime) / 60000);
+    try {
+      const res = await fetch("/api/study-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          method: "mock_exam",
+          durationMin: Math.max(1, duration),
+          topics: [exam.questions[0]?.topic ?? "General"],
+          score,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setXpEarned(data.xpEarned);
+      }
+    } catch (err) {
+      console.error("Failed to log session", err);
+    }
   }
 
   const correctCount = exam
@@ -165,12 +192,34 @@ export function MockExamRunner({ pastPaperMode = false }: { pastPaperMode?: bool
           </ol>
 
           {submitted ? (
-            <p className="mt-6 text-lg font-semibold">
-              {correctCount} / {exam.questions.length} ·{" "}
-              {Math.round((correctCount / exam.questions.length) * 100)}%
-            </p>
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
+                <div className="p-2 bg-white rounded-full dark:bg-emerald-900">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                    {Math.round((correctCount / exam.questions.length) * 100)}%
+                  </p>
+                  <p className="text-sm font-bold text-emerald-600/80 uppercase tracking-wider">
+                    {correctCount} / {exam.questions.length} Correct
+                  </p>
+                </div>
+                {xpEarned !== null && (
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-primary-600 text-white rounded-full text-xs font-bold animate-bounce shadow-lg">
+                      <Star className="h-3 w-3 fill-current" />
+                      {t.study.xpEarned.replace("{amount}", xpEarned.toString())}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-center text-slate-500 font-medium">
+                {t.study.sessionLogged}
+              </p>
+            </div>
           ) : (
-            <button type="button" onClick={() => void submit()} className="btn-primary mt-6">
+            <button type="button" onClick={() => void submit()} className="btn-primary mt-6 w-full py-4 text-base font-bold shadow-lg shadow-primary-500/20">
               {t.common.save}
             </button>
           )}

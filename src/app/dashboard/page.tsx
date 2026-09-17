@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { BookOpen, FileText, GraduationCap, Target } from "lucide-react";
+import { BookOpen, FileText, GraduationCap, Star, Target } from "lucide-react";
 import { AppShell } from "@/components/shared/AppShell";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -104,7 +104,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard icon={Star} label={t.dashboard.totalXP} value={stats.xp} tone="primary" />
         <StatCard icon={FileText} label={t.dashboard.documents} value={stats.docCount} />
         <StatCard icon={BookOpen} label={t.dashboard.flashcards} value={stats.flashcardCount} />
         <StatCard icon={GraduationCap} label={t.dashboard.mockExams} value={stats.mockExamCount} />

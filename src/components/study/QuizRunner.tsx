@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Brain, CheckCircle2, XCircle, ChevronRight, RefreshCw, BookOpen } from "lucide-react";
+import { Brain, CheckCircle2, XCircle, ChevronRight, RefreshCw, BookOpen, Star } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { DocumentSummary, QuizQuestion } from "@/types";
@@ -18,6 +18,7 @@ export function QuizRunner() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [score, setScore] = useState(0);
+  const [xpEarned, setXpEarned] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   const [error, setError] = useState("");
 
@@ -57,24 +58,34 @@ export function QuizRunner() {
   }
 
   async function finishQuiz() {
-    const finalScore = questions.reduce((acc, q, idx) => {
+    const finalScoreCount = questions.reduce((acc, q, idx) => {
       return acc + (userAnswers[idx] === q.correctAnswer ? 1 : 0);
     }, 0);
-    setScore(finalScore);
+    const finalScore = Math.round((finalScoreCount / questions.length) * 100);
+    setScore(finalScoreCount);
     setStage("result");
 
     // Auto-log session
     const duration = Math.ceil((Date.now() - startTime) / 60000);
     const doc = documents.find(d => d.id === selectedDocId);
-    void fetch("/api/study-sessions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        method: "quiz",
-        durationMin: Math.max(1, duration),
-        topics: [selectedTopic || doc?.topics[0] || "General"],
-      }),
-    });
+    try {
+      const res = await fetch("/api/study-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          method: "quiz",
+          durationMin: Math.max(1, duration),
+          topics: [selectedTopic || doc?.topics[0] || "General"],
+          score: finalScore,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setXpEarned(data.xpEarned);
+      }
+    } catch (err) {
+      console.error("Failed to log session", err);
+    }
   }
 
   function handleSelect(option: string) {
@@ -249,11 +260,22 @@ export function QuizRunner() {
     return (
       <div className="card max-w-md mx-auto text-center space-y-8 animate-in zoom-in duration-500">
         <div>
-          <div className="mx-auto w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center dark:bg-emerald-900/30">
+          <div className="mx-auto w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center dark:bg-emerald-900/30 relative">
             <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+            {xpEarned !== null && (
+              <div className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-bounce">
+                +{xpEarned} XP
+              </div>
+            )}
           </div>
           <h2 className="mt-6 text-3xl font-black">Great job!</h2>
-          <p className="text-slate-500">Quiz session completed</p>
+          <p className="text-slate-500">{t.study.sessionLogged}</p>
+          {xpEarned !== null && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-bold dark:bg-primary-950/30 dark:text-primary-400">
+              <Star className="h-4 w-4 fill-current text-accent-500" />
+              {t.study.xpEarned.replace("{amount}", xpEarned.toString())}
+            </div>
+          )}
         </div>
 
         <div className="p-8 bg-slate-50 rounded-3xl dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
