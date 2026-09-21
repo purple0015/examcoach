@@ -1,3 +1,11 @@
 {
-  "subjects": []
+  "subjects": [
+    { "id": "biology", "name": "Biology", "path": "biology.txt", "format": "txt" },
+    { "id": "chemistry", "name": "Chemistry", "path": "chemistry.pdf", "format": "pdf" },
+    { "id": "combined-science", "name": "Combined Science", "path": "combined_science.pdf", "format": "pdf" },
+    { "id": "computer-science", "name": "Computer Science", "path": "computer_science.pdf", "format": "pdf" },
+    { "id": "english", "name": "English", "path": "english.pdf", "format": "pdf" },
+    { "id": "mathematics", "name": "Mathematics", "path": "mathematics.txt", "format": "txt" },
+    { "id": "physics", "name": "Physics", "path": "physics.pdf", "format": "pdf" }
+  ]
 }
