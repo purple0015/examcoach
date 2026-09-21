@@ -36,15 +36,11 @@ export async function POST(req: Request) {
         where: { id: documentId, userId: session.user.id },
       });
 
-      if (!doc) {
-        return NextResponse.json({ error: "Document not found" }, { status: 404 });
-      }
+      if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
       try {
         sourceMaterial = await getDocumentText(doc.fileUrl, doc.filename);
-        if (!topic && doc.topics.length > 0) {
-          finalTopic = doc.topics[0];
-        }
+        if (!topic && doc.topics.length > 0) finalTopic = doc.topics[0];
       } catch (err: any) {
         if (err.message === "FAILED_TO_EXTRACT_DOCUMENT_TEXT") {
           return NextResponse.json(
@@ -53,29 +49,14 @@ export async function POST(req: Request) {
           );
         }
         if (err.message === "INSUFFICIENT_TEXT") {
-          return NextResponse.json(
-            { error: "This document is too short to generate meaningful recall prompts." },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: "This document is too short to generate meaningful recall prompts." }, { status: 400 });
         }
         if (err.message.startsWith("DOCUMENT_REUPLOAD_REQUIRED")) {
-          return NextResponse.json(
-            {
-              error: "DOCUMENT_REUPLOAD_REQUIRED",
-              message: "This document was stored on temporary storage and must be re-uploaded.",
-            },
-            { status: 422 }
-          );
+          return NextResponse.json({ error: "DOCUMENT_REUPLOAD_REQUIRED", message: "This document was stored on temporary storage and must be re-uploaded." }, { status: 422 });
         }
         if (err.message.startsWith("DOCUMENT_UNAVAILABLE")) {
           const status = parseInt(err.message.split(":")[1]) || 422;
-          return NextResponse.json(
-            {
-              error: "DOCUMENT_UNAVAILABLE",
-              message: "The requested document could not be retrieved from cloud storage. Please re-upload the file.",
-            },
-            { status }
-          );
+          return NextResponse.json({ error: "DOCUMENT_UNAVAILABLE", message: "The requested document could not be retrieved from cloud storage. Please re-upload the file." }, { status });
         }
         throw err;
       }
@@ -91,9 +72,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ recalls });
   } catch (error: any) {
     console.error("Rapid Recall generation error:", error);
+    const overloaded = error?.code === "GEMINI_OVERLOADED";
     return NextResponse.json(
-      { error: "An error occurred while generating your recall session." },
-      { status: 500 }
+      {
+        error: overloaded
+          ? "The AI service is currently experiencing high demand. Please try again in a moment."
+          : "An error occurred while generating your recall session.",
+      },
+      { status: overloaded ? 503 : 500 }
     );
   }
 }
