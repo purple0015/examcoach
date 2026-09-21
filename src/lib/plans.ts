@@ -115,7 +115,7 @@ export const PLANS: Plan[] = [
   {
     id: "school",
     name: "School",
-    price: 199.99,
+    price: 1.29,
     interval: "month",
     maxSeats: 100,
     limits: {
@@ -150,7 +150,7 @@ export const PLANS: Plan[] = [
   {
     id: "ministry",
     name: "Ministry",
-    price: 999.99,
+    price: 1.29,
     interval: "month",
     maxSeats: 1000,
     limits: {
@@ -185,7 +185,7 @@ export const PLANS: Plan[] = [
   {
     id: "ngo",
     name: "NGO",
-    price: 378.99,
+    price: 1.29,
     interval: "month",
     maxSeats: 50,
     limits: {
