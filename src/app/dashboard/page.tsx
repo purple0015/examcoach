@@ -15,6 +15,7 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { UploadQuotaCard } from "@/components/dashboard/UploadQuotaCard";
 import { PlanPanel } from "@/components/dashboard/PlanPanel";
 import { PaynowStatusChecker } from "@/components/dashboard/PaynowStatusChecker";
+import { TopicTrendWidget } from "@/components/dashboard/TopicTrendWidget";
 import { DashboardStats, SubscriptionStatus, UploadQuota } from "@/types";
 
 export default function DashboardPage() {
@@ -126,6 +127,10 @@ export default function DashboardPage() {
           <QuickActions tier={subscription.tier} />
         </div>
         <UploadQuotaCard quota={quota} />
+      </div>
+
+      <div className="mt-4">
+        <TopicTrendWidget />
       </div>
 
       <div className="mt-4">

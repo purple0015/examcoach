@@ -12,6 +12,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { STUDY_METHODS, isMethodAllowed, lowestTierWithMethod } from "@/lib/study-methods";
 import { getPlanByTier } from "@/lib/plans";
 import { SubscriptionStatus } from "@/types";
+import { ZimsecSubjectSelector } from "@/components/study/ZimsecSubjectSelector";
 
 export default function StudyMethodsPage() {
   const { t, format } = useI18n();
@@ -48,11 +49,14 @@ export default function StudyMethodsPage() {
         <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.study.subtitle}</p>
       </header>
 
+      <div className="mb-6">
+        <ZimsecSubjectSelector />
+      </div>
+
       <h2 className="section-title">{t.study.available}</h2>
       <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {available.map((method) => {
-          const Icon = (Icons[method.icon as keyof typeof Icons] ??
-            Icons.BookOpen) as Icons.LucideIcon;
+          const Icon = (Icons[method.icon as keyof typeof Icons] ?? Icons.BookOpen) as Icons.LucideIcon;
           return (
             <Link key={method.id} href={method.href} className="card transition-shadow hover:shadow-md">
               <Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" aria-hidden />
