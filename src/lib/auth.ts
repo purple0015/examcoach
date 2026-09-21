@@ -13,7 +13,7 @@ const providers: NextAuthOptions["providers"] = [
     credentials: {
       identifier: { label: "Email or ID", type: "text" },
       password: { label: "Password", type: "password" },
-      type: { label: "Type", type: "text" }, // "email" | "id"
+      type: { label: "Type", type: "text" },
     },
     async authorize(credentials) {
       if (!credentials?.identifier || !credentials?.password) return null;
@@ -35,12 +35,11 @@ const providers: NextAuthOptions["providers"] = [
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) return null;
 
-        // Trial Expiration Check for Org Users
         if (user.orgIdCode) {
           const orgIdRecord = await prisma.orgID.findUnique({
             where: { code: user.orgIdCode },
           });
-          
+
           if (orgIdRecord && orgIdRecord.status === "trial") {
             const now = new Date();
             if (orgIdRecord.trialEndsAt && now > orgIdRecord.trialEndsAt) {
@@ -69,13 +68,45 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-export const authOptions: NextAuthOptions = {
+const useSecureCookies =
+  process.env.NEXTAUTH_URL?.startsWith("https://") === true || process.env.NODE_ENV === "production";
+const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+
+// `trustHost` is required when Render terminates TLS and forwards the request to Next.js.
+// The explicit cookies keep the OAuth state cookie on HTTPS while remaining compatible
+// with local HTTP development.
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers,
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login", newUser: "/dashboard" },
+  cookies: {
+    sessionToken: {
+      name: `${cookiePrefix}next-auth.session-token`,
+      options: { httpOnly: true, sameSite: "lax" as const, path: "/", secure: useSecureCookies },
+    },
+    callbackUrl: {
+      name: `${cookiePrefix}next-auth.callback-url`,
+      options: { sameSite: "lax" as const, path: "/", secure: useSecureCookies },
+    },
+    csrfToken: {
+      name: `${cookiePrefix}next-auth.csrf-token`,
+      options: { httpOnly: true, sameSite: "lax" as const, path: "/", secure: useSecureCookies },
+    },
+    state: {
+      name: `${cookiePrefix}next-auth.state-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: useSecureCookies,
+        maxAge: 900,
+      },
+    },
+  },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger }: any) {
       if (user?.id) token.sub = user.id;
       if (!token.sub) return token;
 
@@ -83,15 +114,13 @@ export const authOptions: NextAuthOptions = {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { 
-              role: true, 
-              locale: true, 
-              email: true, 
-              orgId: true, 
+            select: {
+              role: true,
+              locale: true,
+              email: true,
+              orgId: true,
               orgIdCode: true,
-              organization: {
-                select: { colors: true }
-              }
+              organization: { select: { colors: true } },
             },
           });
           if (dbUser) {
@@ -110,7 +139,7 @@ export const authOptions: NextAuthOptions = {
             if (dbUser.orgIdCode) {
               const orgIdRecord = await prisma.orgID.findUnique({
                 where: { code: dbUser.orgIdCode },
-                select: { status: true, trialEndsAt: true }
+                select: { status: true, trialEndsAt: true },
               });
               if (orgIdRecord) {
                 token.orgStatus = orgIdRecord.status as any;
@@ -124,12 +153,12 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       try {
         if (session.user && token.sub) {
           session.user.id = token.sub;
-          session.user.role = (token.role as string) ?? "user";
-          session.user.locale = (token.locale as Locale) ?? DEFAULT_LOCALE;
+          session.user.role = token.role ?? "user";
+          session.user.locale = token.locale ?? DEFAULT_LOCALE;
           session.user.orgId = token.orgId as string | null;
           session.user.orgIdCode = token.orgIdCode as string | null;
           session.user.orgColors = token.orgColors as any;
@@ -143,16 +172,13 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    async createUser({ user }) {
+    async createUser({ user }: any) {
       if (!user.id) return;
       try {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 7);
 
-        // Check for existing subscription to avoid P2002 if created by signup route
-        const existingSub = await prisma.subscription.findFirst({
-          where: { userId: user.id },
-        });
+        const existingSub = await prisma.subscription.findFirst({ where: { userId: user.id } });
         if (!existingSub) {
           await prisma.subscription.create({
             data: {
@@ -166,14 +192,9 @@ export const authOptions: NextAuthOptions = {
           });
         }
 
-        // Check for existing study goal
-        const existingGoal = await prisma.studyGoal.findUnique({
-          where: { userId: user.id },
-        });
+        const existingGoal = await prisma.studyGoal.findUnique({ where: { userId: user.id } });
         if (!existingGoal) {
-          await prisma.studyGoal.create({
-            data: { userId: user.id, dailyMinutes: 20, weeklyTopics: 5 },
-          });
+          await prisma.studyGoal.create({ data: { userId: user.id, dailyMinutes: 20, weeklyTopics: 5 } });
         }
       } catch (error) {
         console.error("createUser event error:", error);
@@ -181,4 +202,4 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-};
+} satisfies NextAuthOptions & { trustHost: boolean };
