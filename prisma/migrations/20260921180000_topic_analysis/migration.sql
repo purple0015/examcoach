@@ -1,0 +1,14 @@
+model TopicAnalysis {
+  id              String   @id @default(cuid())
+  userId          String
+  documentId      String   @unique
+  topics          Json
+  sourceHash      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

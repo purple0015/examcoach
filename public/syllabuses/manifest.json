@@ -1,0 +1,6 @@
+{
+  "subjects": [
+    { "id": "mathematics", "name": "Mathematics", "path": "mathematics.txt" },
+    { "id": "biology", "name": "Biology", "path": "biology.txt" }
+  ]
+}
