@@ -13,7 +13,7 @@ export async function extractTextWithGemini(
   mimeType: string = "application/pdf",
   retries = 3
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
   const base64Data = fileBuffer.toString("base64");
 
   for (let attempt = 1; attempt <= retries; attempt++) {
