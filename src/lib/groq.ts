@@ -2,7 +2,12 @@ import Groq from "groq-sdk";
 import { Locale, MockExamQuestion } from "@/types";
 import { DEFAULT_LOCALE, LOCALE_AI_NAMES } from "@/lib/i18n/config";
 
-const MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
+// llama-3.3-70b-versatile is no longer available on Groq. Keep the model
+// configurable, but transparently migrate the old Render environment value.
+const configuredModel = process.env.GROQ_MODEL?.trim();
+const MODEL = !configuredModel || configuredModel === "llama-3.3-70b-versatile"
+  ? "openai/gpt-oss-120b"
+  : configuredModel;
 
 const SYSTEM_PROMPT = `You are an expert AI study assistant. 
 Generate study material based ONLY on the provided text.
