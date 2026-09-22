@@ -41,6 +41,15 @@ export async function POST(req: Request) {
         }
       } catch (err: any) {
         console.error("Quiz source material extraction failed:", err);
+        if (err.message === "GEMINI_TEMPORARILY_UNAVAILABLE") {
+          return NextResponse.json(
+            {
+              error: "GEMINI_TEMPORARILY_UNAVAILABLE",
+              message: "AI document processing is temporarily unavailable. Please try again later.",
+            },
+            { status: 503, headers: { "Retry-After": "60" } }
+          );
+        }
         if (err.message === "FAILED_TO_EXTRACT_DOCUMENT_TEXT") {
           return NextResponse.json(
             { error: "FAILED_TO_EXTRACT_DOCUMENT_TEXT", message: "Could not parse document text. The file may be corrupt or protected." },
