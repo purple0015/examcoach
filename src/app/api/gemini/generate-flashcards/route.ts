@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { generateFlashcards } from "@/lib/gemini";
+import { generateFlashcards, isGeminiConfigured } from "@/lib/gemini";
 import { generateFlashcardsGroq, isGroqConfigured } from "@/lib/groq";
 import { prisma } from "@/lib/db";
 import { getTierLimits, getUserTier } from "@/lib/subscription";
