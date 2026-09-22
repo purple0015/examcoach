@@ -130,6 +130,11 @@ export default function PricingPage() {
                 </span>
                 {plan.price > 0 && <span className="ml-1 text-sm text-brand-text-secondary">{t.common.perMonth}</span>}
                 {isTrial && <span className="ml-1 text-sm text-brand-text-secondary">for 7 days</span>}
+                {plan.maxSeats > 1 && plan.price > 0 && (
+                  <p className="mt-1 text-xs text-brand-text-secondary font-medium">
+                    {formatCurrency(plan.price / plan.maxSeats)} / student
+                  </p>
+                )}
               </div>
 
               <div className="mb-6 flex-1">

@@ -46,9 +46,9 @@ The main API is available at `/api/gemini/analyze-topics`:
 | Starter (Free) | Free | 1 | 5 | 10 MB |
 | Pro Scholar | $9.99/mo | 1 | 50 | 25 MB |
 | Global Elite | $24.99/mo | 2 | 500 | 100 MB |
-| School | $199.99/mo | 100 | 1000 | 100 MB |
-| Ministry | $999.99/mo | 1000 | 5000 | 200 MB |
-| NGO | $378.99/mo | 50 | 500 | 50 MB |
+| School | $129.00/mo | 100 | 1000 | 100 MB |
+| Ministry | $1290.00/mo | 1000 | 5000 | 200 MB |
+| NGO | $64.50/mo | 50 | 500 | 50 MB |
 
 Limits live in a single source of truth: `src/lib/plans.ts`.
 

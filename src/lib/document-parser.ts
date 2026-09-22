@@ -5,15 +5,17 @@ import path from "path";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
+
 /**
- * Sends raw document buffers directly to Gemini 1.5 Flash for native parsing with retry logic.
+ * Sends raw document buffers directly to Gemini Flash for native parsing with retry logic.
  */
 export async function extractTextWithGemini(
   fileBuffer: Buffer,
   mimeType: string = "application/pdf",
   retries = 3
 ): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
   const base64Data = fileBuffer.toString("base64");
 
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -35,13 +37,18 @@ export async function extractTextWithGemini(
 
       return extractedText;
     } catch (error: any) {
-      const is503 = error?.status === 503 || error?.message?.includes("503");
-      if (is503 && attempt < retries) {
-        console.warn(`[Gemini Extraction] Received 503. Retrying (${attempt}/${retries})...`);
-        await new Promise((resolve) => setTimeout(resolve, attempt * 2000)); // Delay 2s, 4s...
+      const status = error?.status || error?.response?.status;
+      const isRetryable = status === 503 || status === 429 || error?.message?.includes("503") || error?.message?.includes("429");
+      
+      if (isRetryable && attempt < retries) {
+        const backoffMs = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+        console.warn(`[Gemini Extraction] Received ${status || 'error'}. Retrying (${attempt}/${retries}) in ${Math.round(backoffMs)}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
         continue;
       }
+      
       console.error(`Gemini Extraction failed on attempt ${attempt}:`, error);
+      if (error?.message === "INSUFFICIENT_TEXT") throw error;
       throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
     }
   }

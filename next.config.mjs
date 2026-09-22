@@ -40,6 +40,9 @@ const nextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "10mb" },
   },
+  env: {
+    NEXT_PUBLIC_ORG_PRICE_PER_STUDENT: "1.29",
+  },
 };
 
 export default withPWA(nextConfig);

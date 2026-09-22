@@ -4,18 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDocumentText } from "@/lib/document-parser";
 import { generateQuizGroq, isGroqConfigured } from "@/lib/groq";
+import { generateQuiz, isGeminiConfigured } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!isGroqConfigured()) {
-    return NextResponse.json(
-      { error: "Quiz generation is currently unavailable (API not configured)" },
-      { status: 503 }
-    );
   }
 
   try {
@@ -46,6 +40,7 @@ export async function POST(req: Request) {
           finalTopic = doc.topics[0];
         }
       } catch (err: any) {
+        console.error("Quiz source material extraction failed:", err);
         if (err.message === "FAILED_TO_EXTRACT_DOCUMENT_TEXT") {
           return NextResponse.json(
             { error: "FAILED_TO_EXTRACT_DOCUMENT_TEXT", message: "Could not parse document text. The file may be corrupt or protected." },
@@ -81,19 +76,46 @@ export async function POST(req: Request) {
       }
     }
 
-    // Use Groq to generate the quiz
-    // If no sourceMaterial, it will generate a general quiz based on the topic string
-    const quizItems = await generateQuizGroq(
-      finalTopic,
-      sourceMaterial || `General knowledge about ${finalTopic}`,
-      count || 5,
-      session.user.locale
-    );
+    let quizItems: any[] = [];
+    const requestedCount = count || 5;
+    const material = sourceMaterial || `General knowledge about ${finalTopic}`;
+
+    // Attempt Groq first if configured
+    if (isGroqConfigured()) {
+      try {
+        quizItems = await generateQuizGroq(
+          finalTopic,
+          material,
+          requestedCount,
+          session.user.locale
+        );
+      } catch (groqError) {
+        console.error("Groq quiz generation failed, trying Gemini fallback:", groqError);
+      }
+    }
+
+    // Fallback to Gemini if Groq failed or wasn't configured
+    if (quizItems.length === 0 && isGeminiConfigured()) {
+      try {
+        quizItems = await generateQuiz(
+          finalTopic,
+          material,
+          requestedCount,
+          session.user.locale
+        );
+      } catch (geminiError) {
+        console.error("Gemini quiz generation failed:", geminiError);
+      }
+    }
 
     if (!quizItems || quizItems.length === 0) {
+      const errorMsg = !isGroqConfigured() && !isGeminiConfigured() 
+        ? "AI service is not configured. Please contact support."
+        : "Failed to generate quiz questions. AI services might be temporarily overloaded.";
+      
       return NextResponse.json(
-        { error: "Failed to generate quiz questions. Try a different topic or document." },
-        { status: 500 }
+        { error: errorMsg },
+        { status: 503 }
       );
     }
 
@@ -112,9 +134,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ quiz: quizItems });
   } catch (error: any) {
-    console.error("Quiz generation error:", error);
+    console.error("Quiz generation route error:", error);
     return NextResponse.json(
-      { error: "An error occurred while generating your quiz." },
+      { error: "An unexpected error occurred while generating your quiz." },
       { status: 500 }
     );
   }

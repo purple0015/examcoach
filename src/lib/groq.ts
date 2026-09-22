@@ -2,11 +2,12 @@ import Groq from "groq-sdk";
 import { Locale, MockExamQuestion } from "@/types";
 import { DEFAULT_LOCALE, LOCALE_AI_NAMES } from "@/lib/i18n/config";
 
-const MODEL = process.env.GROQ_MODEL ?? "openai/gpt-oss-20b";
+const MODEL = process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile";
 
 const SYSTEM_PROMPT = `You are an expert AI study assistant. 
 Generate study material based ONLY on the provided text.
 You MUST respond ONLY with a valid JSON object matching the requested schema. 
+The word "JSON" MUST be included in your response for structured output to work.
 Do NOT include markdown formatting, triple backticks, or extra commentary.`;
 
 function client(): Groq {
@@ -38,7 +39,8 @@ async function generateJson<T>(prompt: string, systemMessage?: string): Promise<
     ],
     model: MODEL,
     response_format: { type: "json_object" },
-    temperature: 0.5,
+    temperature: 0.3,
+    max_tokens: 4096,
   });
 
   const text = chatCompletion.choices[0]?.message?.content?.trim() ?? "{}";
@@ -46,12 +48,18 @@ async function generateJson<T>(prompt: string, systemMessage?: string): Promise<
   try {
     return JSON.parse(text) as T;
   } catch (err) {
+    // Attempt to extract JSON if the model included conversational filler
     const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
     if (!match) {
       console.error("Groq JSON Parse Error. Raw text:", text);
       throw new Error("Groq returned a non-JSON response");
     }
-    return JSON.parse(match[0]) as T;
+    try {
+      return JSON.parse(match[0]) as T;
+    } catch (innerErr) {
+      console.error("Groq JSON Extraction Parse Error:", innerErr, "Match:", match[0]);
+      throw new Error("Groq returned invalid JSON");
+    }
   }
 }
 

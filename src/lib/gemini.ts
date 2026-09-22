@@ -2,14 +2,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Locale, MockExamQuestion } from "@/types";
 import { DEFAULT_LOCALE, LOCALE_AI_NAMES } from "@/lib/i18n/config";
 
-// Gemini 1.5 model IDs are no longer available for generateContent in the
-// current Gemini API. Keep the default on a supported model and transparently
-// migrate an old Render GEMINI_MODEL value.
+// Gemini 2.5 models are no longer available for generateContent.
+// We default to gemini-3.6-flash and transparently migrate old values.
 const CONFIGURED_MODEL = process.env.GEMINI_MODEL?.trim();
-const MODEL = CONFIGURED_MODEL === "gemini-1.5-flash" || CONFIGURED_MODEL === "models/gemini-1.5-flash"
-  ? "gemini-2.5-flash"
-  : CONFIGURED_MODEL ?? "gemini-2.5-flash";
-const FALLBACK_MODEL = "gemini-2.5-flash-lite";
+const MODEL = !CONFIGURED_MODEL || CONFIGURED_MODEL.includes("2.5")
+  ? "gemini-3.6-flash"
+  : CONFIGURED_MODEL;
+
+const FALLBACK_MODEL = "gemini-1.5-flash";
 const MAX_ATTEMPTS = 3;
 const INITIAL_BACKOFF_MS = 500;
 
@@ -82,7 +82,7 @@ async function generateJson<T>(prompt: string): Promise<T> {
     text = await generateWithModel(MODEL, prompt);
   } catch (error) {
     // A missing/retired configured model or a busy preferred model should not
-    // make document uploads fail when a supported fallback is available.
+    // make generation fail when a supported fallback is available.
     if (MODEL === FALLBACK_MODEL) throw error;
     try {
       text = await generateWithModel(FALLBACK_MODEL, prompt);
