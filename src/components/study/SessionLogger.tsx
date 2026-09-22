@@ -44,7 +44,7 @@ export function SessionLogger({
 
   return (
     <div className="card mt-6">
-      <h2 className="font-semibold">{t.study.logSession}</h2>
+      <h2 className="font-semibold">{t.study.startSession}</h2>
       <div className="mt-3 flex flex-wrap items-end gap-3">
         <label className="text-sm">
           <span className="block font-medium">{t.common.minutes}</span>
@@ -58,7 +58,7 @@ export function SessionLogger({
           />
         </label>
         <button type="button" onClick={logSession} disabled={saving} className="btn-primary">
-          {saving ? t.common.saving : t.study.logSession}
+          {saving ? t.common.saving : t.study.startSession}
         </button>
       </div>
       {saved && (
