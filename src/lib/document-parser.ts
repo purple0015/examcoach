@@ -3,6 +3,7 @@ import { fetchRemoteFile } from "./fetch-remote-file";
 import fs from "fs";
 import path from "path";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MIN_TEXT_LENGTH = 20;
@@ -25,13 +26,52 @@ function extensionFor(filename: string): string {
   return path.extname(filename).toLowerCase();
 }
 
+function normalizeText(text: string): string {
+  return text.replace(/\u0000/g, "").replace(/\r\n/g, "\n").trim();
+}
+
 function ensureUsableText(text: string, extension: string): string {
-  const normalized = text.replace(/\u0000/g, "").replace(/\r\n/g, "\n").trim();
+  const normalized = normalizeText(text);
   if (!normalized) {
     throw new Error(extension === ".pdf" ? "NO_SELECTABLE_TEXT" : "INSUFFICIENT_TEXT");
   }
   if (normalized.length < MIN_TEXT_LENGTH) throw new Error("INSUFFICIENT_TEXT");
   return normalized;
+}
+
+/**
+ * Ask Gemini to OCR a PDF when PDF.js finds no text layer. This handles scanned
+ * PDFs without adding a native OCR binary (which is difficult to deploy on
+ * Render). The normal, local PDF.js path remains the default and does not use
+ * an AI request.
+ */
+async function extractPdfTextWithOcr(buffer: Buffer): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("NO_SELECTABLE_TEXT");
+
+  const configuredModel = process.env.GEMINI_MODEL?.trim();
+  const modelName = !configuredModel || configuredModel.includes("2.5")
+    ? "gemini-3.6-flash"
+    : configuredModel;
+  const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+    model: modelName,
+    generationConfig: { temperature: 0 },
+  });
+
+  try {
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: "application/pdf",
+          data: buffer.toString("base64"),
+        },
+      },
+      "OCR this scanned PDF. Return only the readable document text, preserving headings, paragraphs, lists, equations, and page order. Do not describe the PDF or add commentary.",
+    ]);
+    return ensureUsableText(result.response.text(), ".pdf");
+  } catch {
+    throw new Error("NO_SELECTABLE_TEXT");
+  }
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
@@ -52,7 +92,13 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
     await document.destroy();
   }
 
-  return ensureUsableText(pages.join("\n\n"), ".pdf");
+  const selectableText = normalizeText(pages.join("\n\n"));
+  if (selectableText.length >= MIN_TEXT_LENGTH) return selectableText;
+
+  // A PDF with no text layer is commonly a scan. Try OCR before returning the
+  // old NO_SELECTABLE_TEXT error so existing clients still get a useful error
+  // when OCR is unavailable or the document is genuinely unreadable.
+  return extractPdfTextWithOcr(buffer);
 }
 
 async function extractDocumentText(buffer: Buffer, filename: string): Promise<string> {
@@ -92,7 +138,7 @@ export async function getFileText(file: File): Promise<string> {
   return extractDocumentText(Buffer.from(await file.arrayBuffer()), file.name);
 }
 
-// Kept as a compatibility export for existing callers; extraction is local and never uses Gemini.
+// Kept as a compatibility export for existing callers.
 export async function extractTextWithGemini(fileBuffer: Buffer, mimeType = "application/pdf"): Promise<string> {
   const extension = mimeType === "application/pdf" ? ".pdf" : mimeType === "text/plain" ? ".txt" : ".docx";
   return extractDocumentText(fileBuffer, `document${extension}`);
