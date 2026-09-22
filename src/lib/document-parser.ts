@@ -7,6 +7,20 @@ import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MIN_TEXT_LENGTH = 20;
 
+// PDF.js tries to discover a worker relative to the compiled Next.js chunk. That
+// path does not exist in a Render production build, so it falls back to a fake
+// worker and fails with "Cannot find module .../pdf.worker.mjs". Point it at the
+// worker shipped in the installed pdfjs-dist package instead.
+const pdfWorkerPath = path.join(
+  process.cwd(),
+  "node_modules",
+  "pdfjs-dist",
+  "legacy",
+  "build",
+  "pdf.worker.mjs"
+);
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerPath;
+
 function extensionFor(filename: string): string {
   return path.extname(filename).toLowerCase();
 }
