@@ -16,8 +16,27 @@ AI-powered study companion by **Axiom Neural Systems** (Silethemba).
   Cornell notes, blurting, mind maps, interleaving, past-paper drills, exam blueprints, peer teaching,
   cohort analytics — gated by plan
 - **Upload page** — drag & drop with per-plan daily upload count and file-size limits
+- **AI material analysis** — extracts topics from uploaded PDFs, DOCX and TXT files
+- **Cross-material topic trends** — analyses all uploaded materials, clusters repeated topics, ranks them by frequency and exam importance, and displays the results on the dashboard
 - **Admin dashboard** — users, plans, system stats
 - **PWA** — installable, offline-capable
+
+## AI Material Analysis and Topic Trends
+
+Uploaded study materials can be analysed with Google Gemini. Each document receives a topic analysis containing:
+
+- Clustered academic topics
+- Mention frequency
+- An AI-estimated importance score
+- A short topic summary
+
+The dashboard combines analyses across the signed-in user's uploaded materials. Repeated topics are merged into a single trend, with frequency and document coverage used to highlight the most important areas to study. Existing analyses are cached using a source hash so unchanged documents do not need to be processed again.
+
+The main API is available at `/api/gemini/analyze-topics`:
+
+- `GET` returns saved analyses and aggregated trends.
+- `POST` with `{ "documentId": "..." }` analyses one document.
+- `POST` with `{ "all": true }` analyses all uploaded documents and returns aggregated trends.
 
 ## Subscription Plans
 
@@ -33,7 +52,6 @@ AI-powered study companion by **Axiom Neural Systems** (Silethemba).
 
 Limits live in a single source of truth: `src/lib/plans.ts`.
 
-
 ## Languages
 
 UI copy lives in `src/lib/i18n/dictionaries/*.ts`. The active locale is stored in the
@@ -48,6 +66,7 @@ cp .env.example .env
 # Fill in DATABASE_URL, NEXTAUTH_SECRET, etc.
 
 npm install
+npx prisma generate
 npx prisma db push
 node scripts/generate-icons.js
 npm run dev
@@ -67,7 +86,8 @@ Open [http://localhost:3000](http://localhost:3000)
 
 1. Push this repo to GitHub
 2. Create a new **Blueprint** from `render.yaml`
-3. Set environment variables in Render dashboard:
+3. Set environment variables in the Render dashboard:
+   - `DATABASE_URL` — use the PostgreSQL internal or pooled connection URL
    - `GEMINI_API_KEY`
    - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
    - `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`
@@ -75,7 +95,19 @@ Open [http://localhost:3000](http://localhost:3000)
    - `PAYPAL_PLAN_INDIVIDUAL`, `PAYPAL_PLAN_FAMILY`, etc.
    - `BLOB_READ_WRITE_TOKEN` (optional, for file storage)
    - `ADMIN_EMAIL` (grants admin role on login)
-4. Render auto-provisions PostgreSQL and runs migrations on deploy
+4. Ensure the build runs Prisma Client generation before Next.js builds:
+
+```bash
+npx prisma generate && npm run build
+```
+
+5. Start the service with:
+
+```bash
+npm start
+```
+
+The Prisma client uses a small connection pool by default to reduce PostgreSQL connection exhaustion on a single Render web instance. If the database provider supplies a pooled connection URL, use that URL for `DATABASE_URL`.
 
 ## Admin Access
 
@@ -86,7 +118,7 @@ Set `ADMIN_EMAIL` in environment variables. That user gets `role: admin` and can
 - Next.js 14 (App Router)
 - NextAuth.js
 - Prisma + PostgreSQL
-- Google Gemini AI (Native document parsing & reasoning)
+- Google Gemini AI (native document parsing, material analysis and reasoning)
 - PayPal Subscriptions
 - Tailwind CSS
 - PWA via @ducanh2912/next-pwa
