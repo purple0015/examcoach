@@ -110,46 +110,66 @@ export const authOptions = {
       if (user?.id) token.sub = user.id;
       if (!token.sub) return token;
 
-      if (user || trigger === "update" || !token.role) {
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: {
-              role: true,
-              locale: true,
-              email: true,
-              orgId: true,
-              orgIdCode: true,
-              organization: { select: { colors: true } },
-            },
-          });
-          if (dbUser) {
-            const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-            const shouldBeAdmin = !!adminEmail && dbUser.email.toLowerCase() === adminEmail;
+      // Always validate the subject. A JWT can outlive its database user (for
+      // example after a database reset), and trusting a stale token lets routes
+      // attempt child-record inserts with a nonexistent foreign key.
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            role: true,
+            locale: true,
+            email: true,
+            orgId: true,
+            orgIdCode: true,
+            organization: { select: { colors: true } },
+          },
+        });
 
-            if (shouldBeAdmin && dbUser.role !== "admin") {
-              await prisma.user.update({ where: { id: token.sub }, data: { role: "admin" } });
-            }
-            token.role = shouldBeAdmin ? "admin" : dbUser.role;
-            token.locale = isLocale(dbUser.locale) ? dbUser.locale : DEFAULT_LOCALE;
-            token.orgId = dbUser.orgId;
-            token.orgIdCode = dbUser.orgIdCode;
-            token.orgColors = dbUser.organization?.colors as any;
-
-            if (dbUser.orgIdCode) {
-              const orgIdRecord = await prisma.orgID.findUnique({
-                where: { code: dbUser.orgIdCode },
-                select: { status: true, trialEndsAt: true },
-              });
-              if (orgIdRecord) {
-                token.orgStatus = orgIdRecord.status as any;
-                token.trialEndsAt = orgIdRecord.trialEndsAt?.toISOString();
-              }
-            }
-          }
-        } catch (error) {
-          console.error("JWT callback error:", error);
+        if (!dbUser) {
+          // Removing sub makes the session callback return an unauthenticated
+          // session, so the client can sign in again instead of receiving P2003.
+          delete token.sub;
+          delete token.role;
+          delete token.locale;
+          delete token.orgId;
+          delete token.orgIdCode;
+          delete token.orgColors;
+          delete token.orgStatus;
+          delete token.trialEndsAt;
+          return token;
         }
+
+        const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+        const shouldBeAdmin = !!adminEmail && dbUser.email.toLowerCase() === adminEmail;
+
+        if (shouldBeAdmin && dbUser.role !== "admin") {
+          await prisma.user.update({ where: { id: token.sub }, data: { role: "admin" } });
+        }
+        token.role = shouldBeAdmin ? "admin" : dbUser.role;
+        token.locale = isLocale(dbUser.locale) ? dbUser.locale : DEFAULT_LOCALE;
+        token.orgId = dbUser.orgId;
+        token.orgIdCode = dbUser.orgIdCode;
+        token.orgColors = dbUser.organization?.colors as any;
+
+        if (dbUser.orgIdCode) {
+          const orgIdRecord = await prisma.orgID.findUnique({
+            where: { code: dbUser.orgIdCode },
+            select: { status: true, trialEndsAt: true },
+          });
+          if (orgIdRecord) {
+            token.orgStatus = orgIdRecord.status as any;
+            token.trialEndsAt = orgIdRecord.trialEndsAt?.toISOString();
+          } else {
+            delete token.orgStatus;
+            delete token.trialEndsAt;
+          }
+        } else {
+          delete token.orgStatus;
+          delete token.trialEndsAt;
+        }
+      } catch (error) {
+        console.error("JWT callback error:", error);
       }
       return token;
     },

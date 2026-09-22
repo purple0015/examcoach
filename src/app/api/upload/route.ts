@@ -20,9 +20,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Do not rely only on the JWT subject. A deployed app can retain a stale
+  // session after its database is reset or a user is deleted.
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  });
+  if (!user) {
+    return NextResponse.json(
+      { error: "Your session is no longer valid. Please sign in again." },
+      { status: 401 }
+    );
+  }
+
   let quota;
   try {
-    quota = await reserveUploadSlot(session.user.id);
+    quota = await reserveUploadSlot(user.id);
   } catch (err) {
     console.error("Quota check failed:", err);
     return NextResponse.json({ error: "Could not verify upload quota" }, { status: 500 });
@@ -43,24 +56,23 @@ export async function POST(req: Request) {
     const file = formData.get("file");
     
     if (!(file instanceof File)) {
-      await releaseUploadSlot(session.user.id);
+      await releaseUploadSlot(user.id);
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     if (file.size > quota.maxFileSizeMb * 1024 * 1024) {
-      await releaseUploadSlot(session.user.id);
+      await releaseUploadSlot(user.id);
       return NextResponse.json(
         { error: `File too large (max ${quota.maxFileSizeMb}MB on your plan)`, quota },
         { status: 413 }
       );
     }
 
-    // Robust type check: some browsers send empty type for certain files
     const isAllowedType = ALLOWED_TYPES.includes(file.type);
     const isAllowedExt = /\.(txt|pdf|docx?)$/i.test(file.name);
 
     if (!isAllowedType && !isAllowedExt) {
-      await releaseUploadSlot(session.user.id);
+      await releaseUploadSlot(user.id);
       return NextResponse.json(
         { error: "Unsupported file type. Use PDF, DOCX or TXT." },
         { status: 415 }
@@ -70,23 +82,21 @@ export async function POST(req: Request) {
     let fileUrl = "";
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
-        const blob = await put(`uploads/${session.user.id}/${Date.now()}-${file.name}`, file, {
+        const blob = await put(`uploads/${user.id}/${Date.now()}-${file.name}`, file, {
           access: "private",
         });
         fileUrl = blob.url;
       } catch (blobError) {
         console.error("Vercel Blob upload failed:", blobError);
-        await releaseUploadSlot(session.user.id);
+        await releaseUploadSlot(user.id);
         return NextResponse.json(
           { error: "Storage service unavailable. Please try again later." },
           { status: 503 }
         );
       }
     } else {
-      // In development, we might allow local if configured, but for production security
-      // we enforce BLOB_READ_WRITE_TOKEN.
       if (process.env.NODE_ENV === "production") {
-        await releaseUploadSlot(session.user.id);
+        await releaseUploadSlot(user.id);
         return NextResponse.json(
           { error: "Cloud storage is not configured. Upload disabled." },
           { status: 500 }
@@ -114,7 +124,7 @@ export async function POST(req: Request) {
 
     const document = await prisma.document.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         filename: file.name,
         fileUrl,
         fileType: file.type || "text/plain",
@@ -126,7 +136,7 @@ export async function POST(req: Request) {
     try {
       await prisma.studySession.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           method: "flashcards",
           durationMin: 5,
           topicsStudied: topics.slice(0, 3),
@@ -134,16 +144,15 @@ export async function POST(req: Request) {
       });
     } catch (sessionError) {
       console.error("Failed to create study session record:", sessionError);
-      // Non-critical, we don't fail the whole upload for this
     }
 
     return NextResponse.json({
       document: { ...document, createdAt: document.createdAt.toISOString() },
-      quota: await getUploadQuota(session.user.id),
+      quota: await getUploadQuota(user.id),
     });
   } catch (error) {
     console.error("Upload error detail:", error);
-    await releaseUploadSlot(session.user.id);
+    await releaseUploadSlot(user.id);
     return NextResponse.json({ error: "Upload failed — please check file and try again" }, { status: 500 });
   }
 }
@@ -161,7 +170,6 @@ export async function GET() {
     console.error("Failed to fetch upload quota:", err);
     return NextResponse.json({ 
       error: "Could not load upload quota",
-      // Fallback minimal quota to allow page to at least render if possible
       canUpload: false,
       uploadsToday: 0,
       maxUploads: 0,
