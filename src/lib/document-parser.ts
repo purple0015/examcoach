@@ -3,10 +3,16 @@ import { fetchRemoteFile } from "./fetch-remote-file";
 import fs from "fs";
 import path from "path";
 
-// Keep model selection configurable. Hard-coding retired/preview model names makes
-// every PDF/DOCX upload fail with the unhelpful FAILED_TO_EXTRACT_DOCUMENT_TEXT.
-const PRIMARY_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL?.trim() || "gemini-2.0-flash";
+// Gemini 2.5 and 2.0 models are retired for new users. Normalize legacy
+// environment values so document extraction keeps working after deployment.
+const configuredModel = process.env.GEMINI_MODEL?.trim();
+const PRIMARY_MODEL = !configuredModel || configuredModel === "gemini-2.5-flash" || configuredModel === "gemini-2.0-flash"
+  ? "gemini-3.6-flash"
+  : configuredModel;
+const configuredFallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
+const FALLBACK_MODEL = !configuredFallback || configuredFallback === "gemini-2.5-flash" || configuredFallback === "gemini-2.0-flash" || configuredFallback === "gemini-1.5-flash"
+  ? "gemini-3.6-flash"
+  : configuredFallback;
 const MAX_ATTEMPTS = 3;
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
@@ -81,7 +87,6 @@ export async function extractTextWithGemini(
     return text;
   }
 
-  // `retries` is retained for API compatibility; each model has bounded retries.
   void Math.max(1, retries);
   let lastError: unknown;
   const models = [...new Set([PRIMARY_MODEL, FALLBACK_MODEL])];
@@ -94,7 +99,6 @@ export async function extractTextWithGemini(
       if (error instanceof Error && ["INSUFFICIENT_TEXT", "EMPTY_DOCUMENT", "DOCUMENT_TOO_LARGE"].includes(error.message)) {
         throw error;
       }
-      if (!isRetryable(error)) break;
     }
   }
 
