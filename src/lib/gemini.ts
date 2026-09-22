@@ -2,8 +2,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Locale, MockExamQuestion } from "@/types";
 import { DEFAULT_LOCALE, LOCALE_AI_NAMES } from "@/lib/i18n/config";
 
-const MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
-const FALLBACK_MODEL = "gemini-1.5-flash";
+// Gemini 1.5 model IDs are no longer available for generateContent in the
+// current Gemini API. Keep the default on a supported model and transparently
+// migrate an old Render GEMINI_MODEL value.
+const CONFIGURED_MODEL = process.env.GEMINI_MODEL?.trim();
+const MODEL = CONFIGURED_MODEL === "gemini-1.5-flash" || CONFIGURED_MODEL === "models/gemini-1.5-flash"
+  ? "gemini-2.5-flash"
+  : CONFIGURED_MODEL ?? "gemini-2.5-flash";
+const FALLBACK_MODEL = "gemini-2.5-flash-lite";
 const MAX_ATTEMPTS = 3;
 const INITIAL_BACKOFF_MS = 500;
 
@@ -31,7 +37,7 @@ function languageInstruction(locale: Locale): string {
   return [
     `Write every user-facing string in ${LOCALE_AI_NAMES[locale]}.`,
     "Keep subject-specific technical terms in English inside brackets the first time they appear,",
-    "so the learner can still recognise them in an English exam paper.",
+    "so the learner can still recognise them in an English exam context.",
   ].join(" ");
 }
 
@@ -39,8 +45,8 @@ function isRetryableGeminiError(error: unknown): boolean {
   const value = error as { status?: number; code?: number | string; message?: string };
   const status = Number(value?.status ?? value?.code);
   const message = String(value?.message ?? error ?? "").toLowerCase();
-  return [429, 500, 503].includes(status) ||
-    /overloaded|resource exhausted|rate limit|temporarily unavailable/.test(message);
+  return [404, 429, 500, 503].includes(status) ||
+    /model.*(not found|not supported)|overloaded|resource exhausted|rate limit|temporarily unavailable/.test(message);
 }
 
 function delay(attempt: number): Promise<void> {
@@ -75,8 +81,9 @@ async function generateJson<T>(prompt: string): Promise<T> {
   try {
     text = await generateWithModel(MODEL, prompt);
   } catch (error) {
-    // A busy preferred model should not make the whole feature unavailable.
-    if (MODEL === FALLBACK_MODEL || !isRetryableGeminiError(error)) throw error;
+    // A missing/retired configured model or a busy preferred model should not
+    // make document uploads fail when a supported fallback is available.
+    if (MODEL === FALLBACK_MODEL) throw error;
     try {
       text = await generateWithModel(FALLBACK_MODEL, prompt);
     } catch (fallbackError) {
@@ -174,7 +181,7 @@ ${explanation.slice(0, 8000)}
 }
 
 export async function studyCoach(methodId: string, content: string, topic?: string, locale: Locale = DEFAULT_LOCALE): Promise<{ score: number; gaps: string[]; feedback: string; nextStep: string }> {
-  const methodNames: Record<string, string> = { active_recall: "Active Recall", cornell_notes: "Cornell Notes", blurting: "Blurting Technique", mind_map: "Mind Mapping", interleaving: "Interleaving Study", exam_blueprint: "Exam Blueprinting", peer_teaching: "Peer Teaching" };
+  const methodNames: Record<string, string> = { active_recall: "Active Recall", cornell_notes: "Cornell Notes", blurting: "Blurting Technique", mind_map: "Mind Mapping", interleaving: "Interleaving" };
   const methodName = methodNames[methodId] || "Study Workspace";
   const topicContext = topic ? ` on the topic of "${topic}"` : "";
   const prompt = `You are a learning science expert. A student is using the ${methodName} technique${topicContext}. Review their provided notes/explanation below and provide coaching feedback.
