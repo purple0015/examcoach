@@ -10,7 +10,16 @@ export function LegalFooter() {
     <footer className="mt-auto border-t border-surface-border py-6 text-sm text-brand-text-secondary dark:border-slate-800 dark:text-slate-400">
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 sm:flex-row sm:justify-between">
         <p>
-          © {new Date().getFullYear()} Axiom Neural Systems by Silethemba. {t.footer.rights}
+          © {new Date().getFullYear()}{" "}
+          <a
+            href="https://axiom-neural.co.zw"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline font-medium"
+          >
+            Axiom Neural Systems
+          </a>{" "}
+          by Silethemba. {t.footer.rights}
         </p>
         <div className="flex items-center gap-4">
           <Link href="/privacy" className="hover:text-primary-600 dark:hover:text-primary-400">

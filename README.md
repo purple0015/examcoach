@@ -1,6 +1,6 @@
 # ExamCoach PWA
 
-AI-powered study companion by **Axiom Neural Systems** (Silethemba).
+AI-powered study companion by [Axiom Neural Systems](https://axiom-neural.co.zw) (Silethemba).
 
 ## Features
 
@@ -125,4 +125,4 @@ Set `ADMIN_EMAIL` in environment variables. That user gets `role: admin` and can
 
 ## Copyright
 
-© 2026 Axiom Neural Systems by Silethemba. All rights reserved.
+© 2026 [Axiom Neural Systems](https://axiom-neural.co.zw) by Silethemba. All rights reserved.
