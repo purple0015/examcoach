@@ -3,122 +3,151 @@ import { fetchRemoteFile } from "./fetch-remote-file";
 import fs from "fs";
 import path from "path";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const CONFIGURED_MODEL = process.env.GEMINI_MODEL?.trim();
+const PRIMARY_MODEL = !CONFIGURED_MODEL || CONFIGURED_MODEL.includes("2.5")
+  ? "gemini-3.6-flash"
+  : CONFIGURED_MODEL;
+const FALLBACK_MODEL = "gemini-1.5-flash";
+const MAX_ATTEMPTS = 3;
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
+function getClient(): GoogleGenerativeAI {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+  return new GoogleGenerativeAI(apiKey);
+}
 
-/**
- * Sends raw document buffers directly to Gemini Flash for native parsing with retry logic.
- */
-export async function extractTextWithGemini(
-  fileBuffer: Buffer,
-  mimeType: string = "application/pdf",
-  retries = 3
-): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+function isRetryable(error: unknown): boolean {
+  const value = error as { status?: number; code?: number | string; message?: string };
+  const status = Number(value?.status ?? value?.code);
+  const message = String(value?.message ?? error ?? "").toLowerCase();
+  return [404, 429, 500, 503].includes(status) ||
+    /model.*(not found|not supported)|overloaded|resource exhausted|rate limit|temporarily unavailable|high demand/.test(message);
+}
+
+function mimeTypeFor(filename: string, providedMimeType?: string): string {
+  const extension = path.extname(filename).toLowerCase();
+  if (extension === ".pdf") return "application/pdf";
+  if (extension === ".docx") return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (extension === ".doc") return "application/msword";
+  if (extension === ".txt") return "text/plain";
+
+  return providedMimeType && [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+  ].includes(providedMimeType)
+    ? providedMimeType
+    : "application/octet-stream";
+}
+
+function backoff(attempt: number): Promise<void> {
+  const delay = 500 * 2 ** attempt + Math.floor(Math.random() * 250);
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+async function extractWithModel(modelName: string, fileBuffer: Buffer, mimeType: string): Promise<string> {
+  const model = getClient().getGenerativeModel({ model: modelName });
   const base64Data = fileBuffer.toString("base64");
+  let lastError: unknown;
 
-  const maxRetries = 5; // Increased retries for high-demand scenarios
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     try {
       const result = await model.generateContent([
         {
           inlineData: {
             data: base64Data,
-            mimeType: mimeType,
+            mimeType,
           },
         },
-        "Extract all educational content from this file. Strip instructions and boilerplate. Return clean Markdown.",
+        "Extract all educational content from this file. Preserve headings, lists, equations, and table content where possible. Strip instructions and boilerplate. Return clean Markdown only.",
       ]);
 
-      const extractedText = result.response.text();
-      if (!extractedText || extractedText.trim().length < 50) {
-        throw new Error("INSUFFICIENT_TEXT");
-      }
-
-      return extractedText;
-    } catch (error: any) {
-      const status = error?.status || error?.response?.status;
-      const message = error?.message?.toLowerCase() || "";
-      const is503 = status === 503 || message.includes("503") || message.includes("high demand");
-      const is429 = status === 429 || message.includes("429") || message.includes("quota");
-      
-      const isRetryable = is503 || is429;
-      
-      if (isRetryable && attempt < maxRetries) {
-        // Longer backoff for 503/High Demand
-        const baseDelay = is503 ? 5000 : 2000;
-        const backoffMs = Math.pow(2, attempt) * baseDelay + Math.random() * 2000;
-        
-        console.warn(`[Gemini Extraction] Received ${is503 ? '503 (High Demand)' : '429 (Rate Limit)'}. Retrying (${attempt}/${maxRetries}) in ${Math.round(backoffMs)}ms...`);
-        
-        await new Promise((resolve) => setTimeout(resolve, backoffMs));
-        continue;
-      }
-      
-      if (is503) {
-        console.error("Gemini is currently unavailable due to high demand after maximum retries.");
-        throw new Error("GEMINI_TEMPORARILY_UNAVAILABLE");
-      }
-
-      console.error(`Gemini Extraction failed on attempt ${attempt}:`, error);
-      if (error?.message === "INSUFFICIENT_TEXT") throw error;
-      throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
+      const text = result.response.text().trim();
+      if (text.length < 20) throw new Error("INSUFFICIENT_TEXT");
+      return text;
+    } catch (error) {
+      lastError = error;
+      if (error instanceof Error && error.message === "INSUFFICIENT_TEXT") throw error;
+      if (!isRetryable(error) || attempt === MAX_ATTEMPTS - 1) throw error;
+      await backoff(attempt);
     }
   }
 
+  throw lastError ?? new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
+}
+
+/**
+ * Sends a document to Gemini for native parsing, retrying transient failures and
+ * falling back when the configured model is unavailable.
+ */
+export async function extractTextWithGemini(
+  fileBuffer: Buffer,
+  mimeType = "application/pdf",
+  retries = MAX_ATTEMPTS
+): Promise<string> {
+  if (!fileBuffer.length) throw new Error("EMPTY_DOCUMENT");
+  if (fileBuffer.length > MAX_FILE_BYTES) throw new Error("DOCUMENT_TOO_LARGE");
+
+  // Plain text does not need an AI request and is more reliable when the API
+  // receives an empty or generic browser MIME type.
+  if (mimeType === "text/plain") {
+    const text = fileBuffer.toString("utf8").replace(/^\uFEFF/, "").trim();
+    if (text.length < 20) throw new Error("INSUFFICIENT_TEXT");
+    return text;
+  }
+
+  const attempts = Math.max(1, retries);
+  let lastError: unknown;
+  for (const modelName of [PRIMARY_MODEL, FALLBACK_MODEL]) {
+    try {
+      // Keep the public retries argument useful for callers while ensuring the
+      // normal path still gets the bounded retry behavior above.
+      return await extractWithModel(modelName, fileBuffer, mimeType);
+    } catch (error) {
+      lastError = error;
+      if (error instanceof Error && ["INSUFFICIENT_TEXT", "EMPTY_DOCUMENT", "DOCUMENT_TOO_LARGE"].includes(error.message)) {
+        throw error;
+      }
+      if (modelName === FALLBACK_MODEL || !isRetryable(error)) break;
+    }
+  }
+
+  const message = String((lastError as { message?: string })?.message ?? "").toLowerCase();
+  if (message.includes("high demand") || message.includes("503")) {
+    throw new Error("GEMINI_TEMPORARILY_UNAVAILABLE");
+  }
   throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");
 }
 
 /**
  * Retrieves file contents from URL/local path and delegates parsing to Gemini.
- * Exported to satisfy existing API route imports.
  */
 export async function getDocumentText(fileUrl: string, filename: string): Promise<string> {
-  try {
-    console.log(`[getDocumentText] Requesting file: ${filename} at URL/Path: ${fileUrl}`);
-    let buffer: Buffer;
-
-    if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
-      const fetchResult = await fetchRemoteFile(fileUrl);
-      if (fetchResult.error || !fetchResult.data) {
-        console.error(`[getDocumentText] Fetch failed with status ${fetchResult.status} for URL: ${fileUrl}`);
-        throw new Error(`DOCUMENT_UNAVAILABLE:${fetchResult.status || 422}`);
-      }
-      buffer = fetchResult.data;
-    } else {
-      const relativePath = fileUrl.replace("local://", "");
-      const fullPath = path.isAbsolute(relativePath)
-        ? relativePath
-        : path.join(process.cwd(), "uploads", relativePath);
-
-      if (!fs.existsSync(fullPath)) {
-        console.error(`[getDocumentText] File missing on server disk at path: ${fullPath}`);
-        throw new Error(`DOCUMENT_REUPLOAD_REQUIRED: Local file not found at ${fullPath}`);
-      }
-      buffer = fs.readFileSync(fullPath);
+  let buffer: Buffer;
+  if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+    const fetchResult = await fetchRemoteFile(fileUrl);
+    if (fetchResult.error || !fetchResult.data) {
+      throw new Error(`DOCUMENT_UNAVAILABLE:${fetchResult.status || 422}`);
     }
-
-    const ext = filename.toLowerCase();
-    let mimeType = "application/pdf";
-    if (ext.endsWith(".docx")) {
-      mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    } else if (ext.endsWith(".txt")) {
-      mimeType = "text/plain";
+    buffer = fetchResult.data;
+  } else {
+    const relativePath = fileUrl.replace("local://", "");
+    const fullPath = path.isAbsolute(relativePath)
+      ? relativePath
+      : path.join(process.cwd(), "uploads", relativePath);
+    if (!fs.existsSync(fullPath)) {
+      throw new Error(`DOCUMENT_REUPLOAD_REQUIRED: Local file not found at ${fullPath}`);
     }
-
-    return await extractTextWithGemini(buffer, mimeType);
-  } catch (error) {
-    console.error(`Error in getDocumentText for ${filename}:`, error);
-    throw error;
+    buffer = fs.readFileSync(fullPath);
   }
+
+  return extractTextWithGemini(buffer, mimeTypeFor(filename));
 }
 
-/**
- * Handles File objects directly during user upload.
- */
+/** Handles File objects directly during user upload. */
 export async function getFileText(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  return extractTextWithGemini(buffer, file.type || "application/pdf");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return extractTextWithGemini(buffer, mimeTypeFor(file.name, file.type));
 }
