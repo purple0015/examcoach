@@ -12,16 +12,185 @@ import { UploadQuotaCard } from "@/components/dashboard/UploadQuotaCard";
 import { DocumentSummary, UploadQuota } from "@/types";
 
 export default function UploadPage() {
-  const { t } = useI18n(); const router = useRouter(); const { status } = useSession(); const inputRef = useRef<HTMLInputElement>(null);
-  const [quota, setQuota] = useState<UploadQuota | null>(null); const [documents, setDocuments] = useState<DocumentSummary[]>([]); const [uploading, setUploading] = useState(false); const [resetting, setResetting] = useState(false); const [showResetModal, setShowResetModal] = useState(false); const [dragging, setDragging] = useState(false); const [message, setMessage] = useState(""); const [error, setError] = useState(""); const [summarizingId, setSummarizingId] = useState<string | null>(null); const [summary, setSummary] = useState<{ id: string; content: string; keyTopics: string[] } | null>(null); const [analysing, setAnalysing] = useState(false); const [analysisComplete, setAnalysisComplete] = useState(false);
-  const load = useCallback(async () => { const [quotaRes, docsRes] = await Promise.all([fetch("/api/upload"), fetch("/api/documents")]); if (quotaRes.ok) setQuota(await quotaRes.json()); if (docsRes.ok) setDocuments(await docsRes.json()); }, []);
-  useEffect(() => { if (status === "unauthenticated") router.replace("/login?callbackUrl=/upload"); if (status === "authenticated") void load(); }, [status, router, load]);
-  async function uploadFile(file: File) { if (!quota) return; setError(""); setMessage(""); if (file.size > quota.maxFileSizeMb * 1024 * 1024) return setError(t.upload.fileTooLarge); setUploading(true); try { const body = new FormData(); body.append("file", file); const res = await fetch("/api/upload", { method: "POST", body }); const data = await res.json(); if (!res.ok) { setError(data.error ?? t.common.error); if (data.quota) setQuota(data.quota); return; } setMessage(`${t.upload.success}: ${file.name}`); setAnalysisComplete(false); await load(); } catch { setError(t.common.error); } finally { setUploading(false); if (inputRef.current) inputRef.current.value = ""; } }
-  async function analyseAllMaterial() { if (!documents.length) return setError("Upload at least one document before analysing material."); setAnalysing(true); setError(""); setMessage(""); setAnalysisComplete(false); let completed = 0; try { for (const document of documents) { const res = await fetch("/api/gemini/analyze-topics", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ documentId: document.id }) }); const data = await res.json(); if (!res.ok) throw new Error(`${document.filename}: ${data.error || "analysis failed"}`); completed += 1; } setAnalysisComplete(true); setMessage(`Analysed ${completed} document${completed === 1 ? "" : "s"}. Your topic trends are ready.`); } catch (err) { setError(err instanceof Error ? err.message : "Could not analyse material."); } finally { setAnalysing(false); } }
-  async function handleSummarize(documentId: string) { setSummarizingId(documentId); setError(""); try { const res = await fetch("/api/gemini/summarize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ documentId }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || "Failed to summarize"); setSummary({ id: documentId, content: data.summary, keyTopics: data.keyTopics }); } catch (err) { setError(err instanceof Error ? err.message : "Failed to summarize"); } finally { setSummarizingId(null); } }
-  async function handleResetAll() { setResetting(true); setError(""); setMessage(""); try { const res = await fetch("/api/documents/reset", { method: "DELETE" }); const data = await res.json(); if (!res.ok) return setError(data.error ?? t.common.error); setMessage(t.upload.resetUploadsSuccess); setDocuments([]); setShowResetModal(false); await load(); } catch { setError(t.common.error); } finally { setResetting(false); } }
-  function handleDrop(event: DragEvent<HTMLDivElement>) { event.preventDefault(); setDragging(false); const file = event.dataTransfer.files?.[0]; if (file) void uploadFile(file); } function handleSelect(event: ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (file) void uploadFile(file); }
-  if (status === "loading" || !quota) return <AppShell><div className="flex justify-center py-24"><LoadingSpinner size="lg" /></div></AppShell>;
-  const disabled = uploading || resetting || analysинг || !quota.canUpload;
-  return <AppShell><header className="mb-6"><h1 className="text-2xl font-bold sm:text-3xl">{t.upload.title}</h1><p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.subtitle}</p></header><div className="grid gap-4 lg:grid-cols-3"><section className="lg:col-span-2"><div onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop} className={`card flex flex-col items-center justify-center border-2 border-dashed py-14 text-center ${dragging ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30" : "border-surface-border dark:border-slate-700"} ${disabled ? "opacity-60" : ""}`}>{uploading ? <><LoadingSpinner size="lg" /><p className="mt-3 text-sm">{t.upload.uploading}</p></> : <><UploadCloud className="h-10 w-10 text-primary-600" /><p className="mt-3 text-sm">{t.upload.dropzone} <button type="button" disabled={disabled} onClick={() => inputRef.current?.click()} className="font-semibold text-primary-600 underline">{t.upload.browse}</button></p><p className="mt-2 text-xs text-brand-text-secondary">{t.upload.maxSize}: {quota.maxFileSizeMb}MB · PDF, DOCX, TXT</p></>}<input ref={inputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={handleSelect} /></div>{!quota.canUpload && <div className="card-muted mt-4 flex items-center justify-between"><p className="text-sm">{t.upload.limitReached}</p><Link href="/pricing" className="btn-primary">{t.upload.upgradeForMore}</Link></div>}<div className="mt-4 flex flex-wrap gap-3"><button type="button" onClick={() => void analyseAllMaterial()} disabled={analysing || documents.length === 0} className="btn-primary flex items-center gap-2"><{analysing ? LoadingSpinner : BarChart3} className="h-4 w-4" />{analysing ? `Analysing ${documents.length} document${documents.length === 1 ? "" : "s"}…` : "Analyse all material"}</button>{analysisComplete && <Link href="/dashboard#topic-trends" className="btn-secondary flex items-center gap-2"><BarChart3 className="h-4 w-4" />View in dashboard</Link>}</div>{error && <p role="alert" className="mt-4 text-sm text-red-600">{error}</p>}{message && <p className="mt-4 flex items-center gap-2 text-sm text-emerald-600"><CheckCircle2 className="h-4 w-4" />{message}</p>}</section><UploadQuotaCard quota={quota} /></div><section className="mt-8"><div className="flex items-center justify-between"><h2 className="section-title">{t.upload.recentUploads}</h2>{documents.length > 0 && <button onClick={() => setShowResetModal(true)} className="flex items-center gap-2 text-xs font-medium text-red-600"><Trash2 className="h-3 w-3" />{t.upload.resetUploads}</button>}</div>{documents.length === 0 ? <p className="mt-2 text-sm text-brand-text-secondary">{t.upload.noUploads}</p> : <ul className="mt-3 space-y-2">{documents.map((doc) => <li key={doc.id} className="card py-3"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><FileText className="mt-1 h-4 w-4 shrink-0 text-primary-600" /><div className="min-w-0"><p className="truncate font-medium">{doc.filename}</p><p className="text-xs text-brand-text-secondary">{t.upload.topics}: {doc.topics.join(", ") || "—"}</p></div></div><button onClick={() => void handleSummarize(doc.id)} disabled={summarizingId === doc.id} className="btn-secondary flex shrink-0 items-center gap-2 px-3 py-1 text-xs">{summarizingId === doc.id ? <LoadingSpinner size="sm" /> : <Sparkles size={12} />}Summarize</button></div>{summary?.id === doc.id && <div className="mt-3 rounded-lg border border-primary-100 bg-primary-50 p-3 dark:bg-primary-950/20"><div className="mb-2 flex justify-between"><h4 className="text-xs font-bold uppercase text-primary-700">AI Summary</h4><button onClick={() => setSummary(null)}><X size={12} /></button></div><p className="mb-3 whitespace-pre-line text-sm">{summary.content}</p><div className="flex flex-wrap gap-1">{summary.keyTopics.map((topic, i) => <span key={i} className="rounded border border-primary-200 bg-white px-2 py-0.5 text-[10px] dark:bg-slate-800">{topic}</span>)}</div></div>}</li>)}</ul>}</section>{showResetModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div className="card w-full max-w-md"><div className="flex items-center justify-between"><h3 className="text-xl font-bold">{t.upload.resetUploadsTitle}</h3><button onClick={() => setShowResetModal(false)}><X size={20} /></button></div><p className="mt-6 text-sm text-brand-text-secondary">{t.upload.resetUploadsDesc}</p><div className="mt-8 flex gap-3"><button onClick={() => setShowResetModal(false)} disabled={resetting} className="btn-secondary flex-1 justify-center">{t.common.cancel}</button><button onClick={() => void handleResetAll()} disabled={resetting} className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white">{resetting ? <LoadingSpinner size="sm" /> : <><Trash2 className="mr-2 inline h-4 w-4" />{t.upload.resetUploadsConfirm}</>}</button></div></div></div>}</AppShell>;
+  const { t } = useI18n();
+  const router = useRouter();
+  const { status } = useSession();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [quota, setQuota] = useState<UploadQuota | null>(null);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<{ id: string; content: string; keyTopics: string[] } | null>(null);
+  const [analysing, setAnalysing] = useState(false);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+
+  const load = useCallback(async () => {
+    const [quotaRes, docsRes] = await Promise.all([fetch("/api/upload"), fetch("/api/documents")]);
+    if (quotaRes.ok) setQuota(await quotaRes.json());
+    if (docsRes.ok) setDocuments(await docsRes.json());
+  }, []);
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/login?callbackUrl=/upload");
+    if (status === "authenticated") void load();
+  }, [status, router, load]);
+
+  async function uploadFile(file: File) {
+    if (!quota) return;
+    setError("");
+    setMessage("");
+    if (file.size > quota.maxFileSizeMb * 1024 * 1024) {
+      setError(t.upload.fileTooLarge);
+      return;
+    }
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? t.common.error);
+        if (data.quota) setQuota(data.quota);
+        return;
+      }
+      setMessage(`${t.upload.success}: ${file.name}`);
+      setAnalysisComplete(false);
+      await load();
+    } catch {
+      setError(t.common.error);
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  async function analyseAllMaterial() {
+    if (!documents.length) {
+      setError("Upload at least one document before analysing material.");
+      return;
+    }
+    setAnalysing(true);
+    setError("");
+    setMessage("");
+    setAnalysisComplete(false);
+    let completed = 0;
+    try {
+      for (const document of documents) {
+        const res = await fetch("/api/gemini/analyze-topics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: document.id }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(`${document.filename}: ${data.error || "analysis failed"}`);
+        completed += 1;
+      }
+      setAnalysisComplete(true);
+      setMessage(`Analysed ${completed} document${completed === 1 ? "" : "s"}. Your topic trends are ready.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not analyse material.");
+    } finally {
+      setAnalysing(false);
+    }
+  }
+
+  async function handleSummarize(documentId: string) {
+    setSummarizingId(documentId);
+    setError("");
+    try {
+      const res = await fetch("/api/gemini/summarize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to summarize");
+      setSummary({ id: documentId, content: data.summary, keyTopics: data.keyTopics });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to summarize");
+    } finally {
+      setSummarizingId(null);
+    }
+  }
+
+  async function handleResetAll() {
+    setResetting(true);
+    setError("");
+    setMessage("");
+    try {
+      const res = await fetch("/api/documents/reset", { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? t.common.error);
+        return;
+      }
+      setMessage(t.upload.resetUploadsSuccess);
+      setDocuments([]);
+      setAnalysisComplete(false);
+      setShowResetModal(false);
+      await load();
+    } catch {
+      setError(t.common.error);
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void uploadFile(file);
+  }
+
+  function handleSelect(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) void uploadFile(file);
+  }
+
+  if (status === "loading" || !quota) {
+    return <AppShell><div className="flex justify-center py-24"><LoadingSpinner size="lg" /></div></AppShell>;
+  }
+
+  const disabled = uploading || resetting || analysing || !quota.canUpload;
+  const AnalysisIcon = analysing ? LoadingSpinner : BarChart3;
+
+  return (
+    <AppShell>
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold sm:text-3xl">{t.upload.title}</h1>
+        <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.subtitle}</p>
+      </header>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <section className="lg:col-span-2">
+          <div onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={handleDrop} className={`card flex flex-col items-center justify-center border-2 border-dashed py-14 text-center ${dragging ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30" : "border-surface-border dark:border-slate-700"} ${disabled ? "opacity-60" : ""}`}>
+            {uploading ? <><LoadingSpinner size="lg" /><p className="mt-3 text-sm">{t.upload.uploading}</p></> : <><UploadCloud className="h-10 w-10 text-primary-600" /><p className="mt-3 text-sm">{t.upload.dropzone} <button type="button" disabled={disabled} onClick={() => inputRef.current?.click()} className="font-semibold text-primary-600 underline">{t.upload.browse}</button></p><p className="mt-2 text-xs text-brand-text-secondary">{t.upload.maxSize}: {quota.maxFileSizeMb}MB · PDF, DOCX, TXT</p></>}
+            <input ref={inputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={handleSelect} />
+          </div>
+          {!quota.canUpload && <div className="card-muted mt-4 flex items-center justify-between"><p className="text-sm">{t.upload.limitReached}</p><Link href="/pricing" className="btn-primary">{t.upload.upgradeForMore}</Link></div>}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button type="button" onClick={() => void analyseAllMaterial()} disabled={analysing || documents.length === 0} className="btn-primary flex items-center gap-2"><AnalysisIcon className="h-4 w-4" />{analysing ? `Analysing ${documents.length} document${documents.length === 1 ? "" : "s"}…` : "Analyse all material"}</button>
+            {analysisComplete && <Link href="/dashboard#topic-trends" className="btn-secondary flex items-center gap-2"><BarChart3 className="h-4 w-4" />View in dashboard</Link>}
+          </div>
+          {error && <p role="alert" className="mt-4 text-sm text-red-600">{error}</p>}
+          {message && <p className="mt-4 flex items-center gap-2 text-sm text-emerald-600"><CheckCircle2 className="h-4 w-4" />{message}</p>}
+        </section>
+        <UploadQuotaCard quota={quota} />
+      </div>
+
+      <section className="mt-8">
+        <div className="flex items-center justify-between"><h2 className="section-title">{t.upload.recentUploads}</h2>{documents.length > 0 && <button onClick={() => setShowResetModal(true)} className="flex items-center gap-2 text-xs font-medium text-red-600"><Trash2 className="h-3 w-3" />{t.upload.resetUploads}</button>}</div>
+        {documents.length === 0 ? <p className="mt-2 text-sm text-brand-text-secondary">{t.upload.noUploads}</p> : <ul className="mt-3 space-y-2">{documents.map((doc) => <li key={doc.id} className="card py-3"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><FileText className="mt-1 h-4 w-4 shrink-0 text-primary-600" /><div className="min-w-0"><p className="truncate font-medium">{doc.filename}</p><p className="text-xs text-brand-text-secondary">{t.upload.topics}: {doc.topics.join(", ") || "—"}</p></div></div><button onClick={() => void handleSummarize(doc.id)} disabled={summarizingId === doc.id} className="btn-secondary flex shrink-0 items-center gap-2 px-3 py-1 text-xs">{summarizingId === doc.id ? <LoadingSpinner size="sm" /> : <Sparkles size={12} />}Summarize</button></div>{summary?.id === doc.id && <div className="mt-3 rounded-lg border border-primary-100 bg-primary-50 p-3 dark:bg-primary-950/20"><div className="mb-2 flex justify-between"><h4 className="text-xs font-bold uppercase text-primary-700">AI Summary</h4><button onClick={() => setSummary(null)}><X size={12} /></button></div><p className="mb-3 whitespace-pre-line text-sm">{summary.content}</p><div className="flex flex-wrap gap-1">{summary.keyTopics.map((topic, i) => <span key={i} className="rounded border border-primary-200 bg-white px-2 py-0.5 text-[10px] dark:bg-slate-800">{topic}</span>)}</div></div>}</li>)}</ul>}
+      </section>
+
+      {showResetModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div className="card w-full max-w-md"><div className="flex items-center justify-between"><h3 className="text-xl font-bold">{t.upload.resetUploadsTitle}</h3><button onClick={() => setShowResetModal(false)}><X size={20} /></button></div><p className="mt-6 text-sm text-brand-text-secondary">{t.upload.resetUploadsDesc}</p><div className="mt-8 flex gap-3"><button onClick={() => setShowResetModal(false)} disabled={resetting} className="btn-secondary flex-1 justify-center">{t.common.cancel}</button><button onClick={() => void handleResetAll()} disabled={resetting} className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white">{resetting ? <LoadingSpinner size="sm" /> : <><Trash2 className="mr-2 inline h-4 w-4" />{t.upload.resetUploadsConfirm}</>}</button></div></div></div>}
+    </AppShell>
+  );
 }
