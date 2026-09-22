@@ -17,7 +17,7 @@ type StoredAnalysis = {
 async function analyze(material: string, syllabus: string): Promise<TopicTrend[]> {
   if (!process.env.GEMINI_API_KEY) throw new Error("AI service is not configured");
   const model = new GoogleGenerativeAI(process.env.GEMINI_API_KEY).getGenerativeModel({
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
     generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
   });
   const result = await model.generateContent(`You are an exam trend analyst. Extract and cluster the distinct academic topics in this material. Count frequency as the number of meaningful mentions or sections, then rank importance from 0 to 100 using repetition, learning objectives, assessment relevance, and prerequisite value. Return ONLY JSON: {"topics":[{"topic":string,"frequency":number,"importanceScore":number,"summary":string}]}. Sort descending by importanceScore. Maximum 15 topics.\n${syllabusInstruction(syllabus)}\nMATERIAL:\n${material.slice(0, MAX_MATERIAL_LENGTH)}`);

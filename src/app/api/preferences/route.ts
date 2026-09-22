@@ -21,6 +21,18 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid preferences" }, { status: 400 });
   }
 
-  await prisma.user.update({ where: { id: session.user.id }, data: parsed.data });
-  return NextResponse.json({ persisted: true, ...parsed.data });
+  try {
+    await prisma.user.update({ where: { id: session.user.id }, data: parsed.data });
+    return NextResponse.json({ persisted: true, ...parsed.data });
+  } catch (error: any) {
+    // P2025: Record to update not found
+    if (error.code === "P2025") {
+      console.error(`[Preferences] User ${session.user.id} not found in database. This may be due to a database migration issue.`);
+      return NextResponse.json(
+        { error: "User profile not found. Please log out and log back in." },
+        { status: 404 }
+      );
+    }
+    throw error;
+  }
 }

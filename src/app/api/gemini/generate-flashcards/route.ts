@@ -70,6 +70,8 @@ export async function POST(req: Request) {
 
   try {
     let cards;
+    let generationError: any = null;
+
     if (isGroqConfigured()) {
       try {
         cards = await generateFlashcardsGroq(
@@ -79,21 +81,47 @@ export async function POST(req: Request) {
           session.user.locale
         );
       } catch (groqError: any) {
-        console.error("Groq flashcard generation failed, falling back to Gemini:", groqError);
-        // Seamless fallback to Gemini
+        console.error("Groq flashcard generation failed:", groqError.message);
+        generationError = groqError;
+        // Fallback to Gemini
+      }
+    }
+
+    if (!cards && isGeminiConfigured()) {
+      try {
         cards = await generateFlashcards(
           resolvedTopic,
           documentContext,
           count,
           session.user.locale
         );
+      } catch (geminiError: any) {
+        console.error("Gemini flashcard generation failed:", geminiError.message);
+        generationError = geminiError;
       }
-    } else {
-      cards = await generateFlashcards(
-        resolvedTopic,
-        documentContext,
-        count,
-        session.user.locale
+    }
+
+    if (!cards) {
+      const isGeminiUnavailable = generationError?.code === "GEMINI_UNAVAILABLE" || generationError?.message?.includes("high demand");
+      const isGroqJsonError = generationError?.message?.includes("JSON");
+      
+      if (isGeminiUnavailable) {
+        return NextResponse.json(
+          { error: "AI service is temporarily overloaded. Please try again in a moment." },
+          { status: 503 }
+        );
+      }
+      
+      if (isGroqJsonError) {
+         return NextResponse.json(
+          { error: "AI failed to generate valid flashcards. Please try a different topic or document." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: "AI service is currently unavailable. Please try again later." },
+        { status: 503 }
       );
     }
 
@@ -121,8 +149,11 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json({ flashcards: created });
-  } catch (error) {
-    console.error("Flashcard generation error:", error);
-    return NextResponse.json({ error: "Failed to generate flashcards" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Flashcard generation final catch:", error);
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "User session mismatch. Please log out and back in." }, { status: 401 });
+    }
+    return NextResponse.json({ error: "An unexpected error occurred during generation." }, { status: 500 });
   }
 }

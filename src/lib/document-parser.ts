@@ -18,7 +18,8 @@ export async function extractTextWithGemini(
   const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
   const base64Data = fileBuffer.toString("base64");
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  const maxRetries = 5; // Increased retries for high-demand scenarios
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const result = await model.generateContent([
         {
@@ -38,15 +39,28 @@ export async function extractTextWithGemini(
       return extractedText;
     } catch (error: any) {
       const status = error?.status || error?.response?.status;
-      const isRetryable = status === 503 || status === 429 || error?.message?.includes("503") || error?.message?.includes("429");
+      const message = error?.message?.toLowerCase() || "";
+      const is503 = status === 503 || message.includes("503") || message.includes("high demand");
+      const is429 = status === 429 || message.includes("429") || message.includes("quota");
       
-      if (isRetryable && attempt < retries) {
-        const backoffMs = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-        console.warn(`[Gemini Extraction] Received ${status || 'error'}. Retrying (${attempt}/${retries}) in ${Math.round(backoffMs)}ms...`);
+      const isRetryable = is503 || is429;
+      
+      if (isRetryable && attempt < maxRetries) {
+        // Longer backoff for 503/High Demand
+        const baseDelay = is503 ? 5000 : 2000;
+        const backoffMs = Math.pow(2, attempt) * baseDelay + Math.random() * 2000;
+        
+        console.warn(`[Gemini Extraction] Received ${is503 ? '503 (High Demand)' : '429 (Rate Limit)'}. Retrying (${attempt}/${maxRetries}) in ${Math.round(backoffMs)}ms...`);
+        
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
         continue;
       }
       
+      if (is503) {
+        console.error("Gemini is currently unavailable due to high demand after maximum retries.");
+        throw new Error("GEMINI_TEMPORARILY_UNAVAILABLE");
+      }
+
       console.error(`Gemini Extraction failed on attempt ${attempt}:`, error);
       if (error?.message === "INSUFFICIENT_TEXT") throw error;
       throw new Error("FAILED_TO_EXTRACT_DOCUMENT_TEXT");

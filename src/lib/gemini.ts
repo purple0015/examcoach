@@ -45,8 +45,12 @@ function isRetryableGeminiError(error: unknown): boolean {
   const value = error as { status?: number; code?: number | string; message?: string };
   const status = Number(value?.status ?? value?.code);
   const message = String(value?.message ?? error ?? "").toLowerCase();
-  return [404, 429, 500, 503].includes(status) ||
-    /model.*(not found|not supported)|overloaded|resource exhausted|rate limit|temporarily unavailable/.test(message);
+  return (
+    [404, 429, 500, 503].includes(status) ||
+    /model.*(not found|not supported)|overloaded|resource exhausted|rate limit|temporarily unavailable|high demand/.test(
+      message
+    )
+  );
 }
 
 function delay(attempt: number): Promise<void> {

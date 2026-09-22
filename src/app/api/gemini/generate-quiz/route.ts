@@ -135,6 +135,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ quiz: quizItems });
   } catch (error: any) {
     console.error("Quiz generation route error:", error);
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "User session mismatch. Please log out and back in." }, { status: 401 });
+    }
     return NextResponse.json(
       { error: "An unexpected error occurred while generating your quiz." },
       { status: 500 }

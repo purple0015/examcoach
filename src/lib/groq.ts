@@ -117,13 +117,31 @@ export async function generateStudyMaterialGroq(
   count: number,
   locale: Locale = DEFAULT_LOCALE
 ): Promise<any[]> {
-  const flashcardSchema = `{"flashcards": [{"question": string, "answer": string}]}`;
-  const quizSchema = `{"quiz": [{"id": string, "question": string, "options": string[4], "correctAnswer": string, "explanation": string}]}`;
+  const flashcardSchema = `{
+  "flashcards": [
+    {
+      "question": "string",
+      "answer": "string"
+    }
+  ]
+}`;
+  const quizSchema = `{
+  "quiz": [
+    {
+      "id": "string",
+      "question": "string",
+      "options": ["string", "string", "string", "string"],
+      "correctAnswer": "string",
+      "explanation": "string"
+    }
+  ]
+}`;
   
   const schema = mode === "flashcards" ? flashcardSchema : quizSchema;
   const key = mode === "flashcards" ? "flashcards" : "quiz";
 
-  const prompt = `Create ${count} exam-focused ${mode} items on "${topic}" from the material below.
+  const prompt = `Act as an expert educational content creator.
+Create exactly ${count} exam-focused ${mode} items on the topic "${topic}" based on the provided material.
 
 MATERIAL:
 ---
@@ -132,12 +150,16 @@ ${sourceMaterial.slice(0, 12000)}
 
 ${languageInstruction(locale)}
 
-CRITICAL QUALITY RULE: 
-NEVER generate meta-questions about the exam structure.
-ONLY generate subject-matter items.
+CRITICAL RULES:
+1. Respond ONLY with a valid JSON object.
+2. Follow this EXACT JSON schema:
+${schema}
+3. NO meta-questions about the exam structure (e.g., "What is question 1?").
+4. ONLY subject-matter content.
+5. For quizes: "options" must have exactly 4 strings, and "correctAnswer" MUST match one of them exactly.
+6. For flashcards: Answers must be concise (max 3 sentences).
 
-Return JSON: ${schema}
-${mode === "quiz" ? 'Ensure "options" contains exactly 4 choices and "correctAnswer" matches one of them exactly.' : 'Answers must be at most 3 sentences and testable in an exam.'}`;
+Ensure the response is a single, clean JSON object.`;
 
   const parsed = await generateJson<any>(prompt);
   const items = parsed[key] ?? [];
