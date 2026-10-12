@@ -44,6 +44,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   }));
 }
 
+// Let NextAuth derive cookie names/options from NEXTAUTH_URL. A hand-written
+// __Secure state cookie can be set on one hostname and returned to another,
+// producing "State cookie was missing" behind Render/custom domains.
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers,
@@ -83,7 +86,7 @@ export const authOptions = {
       if (!user.id) return;
       try {
         const trialEndDate = new Date(); trialEndDate.setDate(trialEndDate.getDate() + 7);
-        if (!(await prisma.subscription.findFirst({ where: { userId: user.id } }))) await prisma.subscription.create({ data: { userId: user.id, tier: "free_trial", status: "active", trialStartDate: new Date(), trialEndsAt: trialEndDate, maxSeats: 1 } });
+        if (!(await prisma.subscription.findFirst({ where: { userId: user.id } }))) await prisma.subscription.create({ data: { userId: user.id, tier: "free_trial", status: "active", trialStartDate: new Date(), trialEndDate, maxSeats: 1 } });
         if (!(await prisma.studyGoal.findUnique({ where: { userId: user.id } }))) await prisma.studyGoal.create({ data: { userId: user.id, dailyMinutes: 20, weeklyTopics: 5 } });
       } catch (error) { console.error("createUser event error:", error); }
     },
