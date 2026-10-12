@@ -40,10 +40,8 @@ function ensureUsableText(text: string, extension: string): string {
 }
 
 /**
- * Ask Gemini to OCR a PDF when PDF.js finds no text layer. This handles scanned
- * PDFs without adding a native OCR binary (which is difficult to deploy on
- * Render). The normal, local PDF.js path remains the default and does not use
- * an AI request.
+ * Try OCR when a PDF has no selectable text layer. This is the main path for
+ * scanned/faxed PDFs and image-based Documents uploaded into the app.
  */
 async function extractPdfTextWithOcr(buffer: Buffer): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -53,6 +51,7 @@ async function extractPdfTextWithOcr(buffer: Buffer): Promise<string> {
   const modelName = !configuredModel || configuredModel.includes("2.5")
     ? "gemini-3.6-flash"
     : configuredModel;
+
   const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
     model: modelName,
     generationConfig: { temperature: 0 },
@@ -66,9 +65,11 @@ async function extractPdfTextWithOcr(buffer: Buffer): Promise<string> {
           data: buffer.toString("base64"),
         },
       },
-      "OCR this scanned PDF. Return only the readable document text, preserving headings, paragraphs, lists, equations, and page order. Do not describe the PDF or add commentary.",
+      "OCR this scanned or image-based PDF. Return only the readable document text, preserving headings, paragraphs, lists, equations, and page order. Do not describe the PDF or add commentary.",
     ]);
-    return ensureUsableText(result.response.text(), ".pdf");
+
+    const text = result.response.text();
+    return ensureUsableText(text, ".pdf");
   } catch {
     throw new Error("NO_SELECTABLE_TEXT");
   }
@@ -95,9 +96,8 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
   const selectableText = normalizeText(pages.join("\n\n"));
   if (selectableText.length >= MIN_TEXT_LENGTH) return selectableText;
 
-  // A PDF with no text layer is commonly a scan. Try OCR before returning the
-  // old NO_SELECTABLE_TEXT error so existing clients still get a useful error
-  // when OCR is unavailable or the document is genuinely unreadable.
+  // Maybe the file is a scanned document. OCR it before returning the generic
+  // "no text layer" error.
   return extractPdfTextWithOcr(buffer);
 }
 
