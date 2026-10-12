@@ -1,5 +1,15 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Font, pdf } from '@react-pdf/renderer';
+
+// Initialize standard PDF fonts on component load
+if (typeof window === 'undefined') {
+  // Server-side: configure @react-pdf/renderer font paths
+  try {
+    pdf.Font.registerHyphenationCallback((word) => [word]);
+  } catch {
+    // Ignore if already registered
+  }
+}
 
 // Register a monospace font for ID Code and Temp Password
 Font.register({
