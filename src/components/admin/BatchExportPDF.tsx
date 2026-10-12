@@ -1,16 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font, pdf } from '@react-pdf/renderer';
-
-// Set the standard font data URL for production (Render environment)
-if (typeof window === 'undefined') {
-  try {
-    pdf.setOptions({
-      standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
-    });
-  } catch (error) {
-    console.warn('Could not set PDF font data URL:', error);
-  }
-}
+import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 
 // Register a monospace font for ID Code and Temp Password
 Font.register({
