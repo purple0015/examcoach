@@ -1,6 +1,6 @@
 # ExamCoach PWA
 
-AI-powered study companion by [Axiom Neural Systems](https://axiom-neural.co.zw) (Silethemba).
+AI-powered study companion by [Axiom Neural Systems](https://axiom-neural.co.zw).
 
 ## Features
 
@@ -30,7 +30,7 @@ Uploaded study materials can be analysed with Google Gemini. Each document recei
 - An AI-estimated importance score
 - A short topic summary
 
-The dashboard combines analyses across the signed-in user's uploaded materials. Repeated topics are merged into a single trend, with frequency and document coverage used to highlight the most important areas to study. Existing analyses are cached using a source hash so unchanged documents do not need to be processed again.
+The dashboard combines analyses across the signed-in user's uploaded materials. Repeated topics are merged into a single trend, with frequency and document coverage used to highlight the most impo[...]
 
 The main API is available at `/api/gemini/analyze-topics`:
 
@@ -125,4 +125,4 @@ Set `ADMIN_EMAIL` in environment variables. That user gets `role: admin` and can
 
 ## Copyright
 
-© 2026 [Axiom Neural Systems](https://axiom-neural.co.zw) by Silethemba. All rights reserved.
+© 2026 [Axiom Neural Systems](https://axiom-neural.co.zw). All rights reserved.
