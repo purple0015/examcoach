@@ -19,7 +19,7 @@ export function LegalFooter() {
           >
             Axiom Neural Systems
           </a>{" "}
-          by Silethemba. {t.footer.rights}
+          {t.footer.rights}
         </p>
         <div className="flex items-center gap-4">
           <Link href="/privacy" className="hover:text-primary-600 dark:hover:text-primary-400">
