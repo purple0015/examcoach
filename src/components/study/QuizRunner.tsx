@@ -13,7 +13,8 @@ export function QuizRunner() {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
-  
+  const [analysis, setAnalysis] = useState<{ topics: string[]; summary: string; usedTopic: string } | null>(null);
+
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
@@ -36,7 +37,7 @@ export function QuizRunner() {
       const res = await fetch("/api/gemini/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: selectedDocId, topic: selectedTopic }),
+        body: JSON.stringify({ documentId: selectedDocId, topic: selectedTopic, mode: "replace" }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -45,7 +46,8 @@ export function QuizRunner() {
         }
         throw new Error(data.error || "Generation failed");
       }
-      
+
+      if (data.analysis) setAnalysis(data.analysis);
       setQuestions(data.quiz);
       setStage("active");
       setCurrentIdx(0);
@@ -65,9 +67,8 @@ export function QuizRunner() {
     setScore(finalScoreCount);
     setStage("result");
 
-    // Auto-log session
     const duration = Math.ceil((Date.now() - startTime) / 60000);
-    const doc = documents.find(d => d.id === selectedDocId);
+    const doc = documents.find((d) => d.id === selectedDocId);
     try {
       const res = await fetch("/api/study-sessions", {
         method: "POST",
@@ -75,7 +76,7 @@ export function QuizRunner() {
         body: JSON.stringify({
           method: "quiz",
           durationMin: Math.max(1, duration),
-          topics: [selectedTopic || doc?.topics[0] || "General"],
+          topics: [selectedTopic || doc?.topics[0] || analysis?.usedTopic || "General"],
           score: finalScore,
         }),
       });
@@ -114,7 +115,7 @@ export function QuizRunner() {
               value={selectedDocId}
               onChange={(e) => {
                 setSelectedDocId(e.target.value);
-                const doc = documents.find(d => d.id === e.target.value);
+                const doc = documents.find((d) => d.id === e.target.value);
                 if (doc && doc.topics.length > 0) setSelectedTopic(doc.topics[0]);
               }}
             >
@@ -144,6 +145,18 @@ export function QuizRunner() {
               onChange={(e) => setSelectedTopic(e.target.value)}
             />
           </div>
+
+          {analysis && (
+            <div className="rounded-xl border border-primary-200 bg-primary-50/60 p-3 dark:border-primary-900/50 dark:bg-primary-950/20">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">Detected topic focus</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(analysis.topics || []).slice(0, 5).map((topic) => (
+                  <span key={topic} className="chip">{topic}</span>
+                ))}
+              </div>
+              {analysis.summary && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{analysis.summary}</p>}
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg dark:bg-red-950/30 dark:text-red-400 border border-red-200 dark:border-red-900/50">
@@ -187,21 +200,32 @@ export function QuizRunner() {
             Question <span className="text-slate-900 dark:text-white font-bold">{currentIdx + 1}</span> of {questions.length}
           </div>
           <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
-            <div 
+            <div
               className="h-full bg-primary-600 transition-all duration-300"
               style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
             />
           </div>
         </div>
 
+        {analysis && (
+          <div className="rounded-xl border border-slate-200 bg-white/60 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Current topic focus</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(analysis.topics || []).slice(0, 5).map((topic) => (
+                <span key={topic} className="chip">{topic}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="card animate-in fade-in slide-in-from-right-4 duration-300">
           <h2 className="text-lg font-bold sm:text-xl leading-relaxed">{q.question}</h2>
-          
+
           <div className="mt-8 grid gap-3">
             {q.options.map((option, i) => {
               const isSelected = userChoice === option;
               const isCorrect = option === q.correctAnswer;
-              
+
               let variantClasses = "border-slate-200 hover:border-primary-400 hover:bg-primary-50/50 dark:border-slate-800 dark:hover:bg-primary-950/30";
               if (isAnswered) {
                 if (isCorrect) variantClasses = "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-400 ring-2 ring-emerald-500/20";
@@ -286,13 +310,22 @@ export function QuizRunner() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <button 
+          <button
             onClick={() => setStage("setup")}
             className="btn-primary w-full py-4 text-base font-bold flex items-center justify-center gap-2"
           >
             <RefreshCw className="h-5 w-5" /> Retake Quiz
           </button>
-          <Link 
+          <button
+            onClick={() => {
+              setAnalysis(null);
+              setStage("setup");
+            }}
+            className="btn-secondary w-full py-4 text-base font-bold"
+          >
+            Generate another set
+          </button>
+          <Link
             href="/study"
             className="btn-secondary w-full py-4 text-base font-bold"
           >
@@ -305,3 +338,4 @@ export function QuizRunner() {
 
   return null;
 }
+

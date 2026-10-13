@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDocumentText } from "@/lib/document-parser";
-import { generateRapidRecall } from "@/lib/gemini";
+import { generateRapidRecall, parseDocument } from "@/lib/gemini";
 import { getUserTier } from "@/lib/subscription";
 import { isMethodAllowed } from "@/lib/study-methods";
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { documentId, topic, count } = await req.json();
+    const { documentId, topic, count, mode = "replace" } = await req.json();
 
     if (!documentId && !topic) {
       return NextResponse.json(
@@ -40,7 +40,6 @@ export async function POST(req: Request) {
 
       try {
         sourceMaterial = await getDocumentText(doc.fileUrl, doc.filename);
-        if (!topic && doc.topics.length > 0) finalTopic = doc.topics[0];
       } catch (err: any) {
         if (err.message === "FAILED_TO_EXTRACT_DOCUMENT_TEXT") {
           return NextResponse.json(
@@ -60,7 +59,15 @@ export async function POST(req: Request) {
         }
         throw err;
       }
+
+      const analysis = await parseDocument(sourceMaterial, session.user.locale).catch(() => ({ topics: [], summary: "" }));
+      const detectedTopics = Array.from(new Set([...(doc.topics ?? []), ...(analysis.topics ?? [])].filter(Boolean)));
+      finalTopic = topic || detectedTopics[0] || doc.topics[0] || "General Study";
     }
+
+    const analysis = sourceMaterial
+      ? await parseDocument(sourceMaterial, session.user.locale).catch(() => ({ topics: [finalTopic], summary: "" }))
+      : { topics: [finalTopic], summary: "" };
 
     const recalls = await generateRapidRecall(
       finalTopic,
@@ -69,7 +76,15 @@ export async function POST(req: Request) {
       session.user.locale
     );
 
-    return NextResponse.json({ recalls });
+    return NextResponse.json({
+      recalls,
+      analysis: {
+        topics: Array.from(new Set([...(analysis.topics ?? []), finalTopic].filter(Boolean))),
+        summary: analysis.summary,
+        usedTopic: finalTopic,
+      },
+      mode,
+    });
   } catch (error: any) {
     console.error("Rapid Recall generation error:", error);
     const overloaded = error?.code === "GEMINI_OVERLOADED";
@@ -83,3 +98,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

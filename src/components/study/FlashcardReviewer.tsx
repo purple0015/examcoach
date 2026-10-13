@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { RotateCcw, RefreshCw } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
@@ -18,13 +18,13 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [analysis, setAnalysis] = useState<{ topics: string[]; summary: string; usedTopic: string } | null>(null);
 
   async function loadCards() {
     setLoading(true);
     const [cardsRes, docsRes] = await Promise.all([fetch("/api/flashcards"), fetch("/api/documents")]);
     if (cardsRes.ok) {
       const all = (await cardsRes.json()) as FlashcardItem[];
-      // Spaced repetition surfaces cards due for review first.
       setCards(
         spaced
           ? [...all].sort((a, b) => {
@@ -44,11 +44,14 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaced]);
 
-  async function generate(documentId: string, topic?: string, reset = false) {
+  const currentTopic = useMemo(() => {
+    return analysis?.usedTopic || cards[index]?.topic || "General";
+  }, [analysis, cards, index]);
+
+  async function generate(documentId: string, topic?: string, reset = false, mode: "replace" | "append" = "replace") {
     setGenerating(true);
     setError("");
-    
-    // UI Reset immediately if resetting
+
     if (reset) {
       setIndex(0);
       setRevealed(false);
@@ -58,7 +61,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       const res = await fetch("/api/gemini/generate-flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, topic, reset }),
+        body: JSON.stringify({ documentId, topic, reset, mode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -69,7 +72,8 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
         }
         return;
       }
-      
+
+      if (data.analysis) setAnalysis(data.analysis);
       if (data.flashcards) {
         setCards(data.flashcards);
         setIndex(0);
@@ -119,12 +123,12 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       <div className="card">
         <div className="flex items-center justify-between">
           <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.noUploads}</p>
-          <button 
-            onClick={() => void refreshDocuments()} 
+          <button
+            onClick={() => void refreshDocuments()}
             disabled={loading}
             className="flex items-center text-xs font-medium text-primary-600 hover:text-primary-700"
           >
-            <RefreshCw size={14} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={14} className={`mr-1 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
         </div>
@@ -135,7 +139,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
                 key={doc.id}
                 type="button"
                 disabled={generating}
-                onClick={() => void generate(doc.id, doc.topics[0])}
+                onClick={() => void generate(doc.id, doc.topics[0], true, "replace")}
                 className="btn-secondary w-full justify-between"
               >
                 <span className="truncate">{doc.filename}</span>
@@ -161,11 +165,23 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
 
   return (
     <div className="card">
+      {analysis && (
+        <div className="mb-4 rounded-xl border border-primary-200 bg-primary-50/60 p-3 dark:border-primary-900/50 dark:bg-primary-950/20">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">Material analysis</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(analysis.topics || []).slice(0, 5).map((topic) => (
+              <span key={topic} className="chip">{topic}</span>
+            ))}
+          </div>
+          {analysis.summary && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{analysis.summary}</p>}
+        </div>
+      )}
+
       <div className="flex items-center justify-between text-sm text-brand-text-secondary dark:text-slate-400">
         <span>
           {index + 1} {t.common.of} {cards.length}
         </span>
-        <span className="chip">{card.topic}</span>
+        <span className="chip">{currentTopic}</span>
       </div>
 
       <button
@@ -191,12 +207,9 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
           type="button"
           disabled={generating}
           onClick={() => {
-            const currentCard = cards[index];
-            if (currentCard?.documentId) {
-              void generate(currentCard.documentId, currentCard.topic, true);
-            } else {
-              setRevealed(false);
-              setIndex(0);
+            const doc = documents.find((d) => d.id === card.documentId) ?? documents[0];
+            if (doc) {
+              void generate(doc.id, currentTopic, true, "replace");
             }
           }}
           className="btn-ghost ml-auto"
@@ -209,6 +222,30 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
           {generating ? t.common.loading : t.common.retry}
         </button>
       </div>
+
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-surface-border pt-4 dark:border-slate-700">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => {
+            const doc = documents.find((d) => d.id === card.documentId) ?? documents[0];
+            if (doc) void generate(doc.id, currentTopic, false, "append");
+          }}
+        >
+          Generate more
+        </button>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => {
+            const doc = documents.find((d) => d.id === card.documentId) ?? documents[0];
+            if (doc) void generate(doc.id, currentTopic, true, "replace");
+          }}
+        >
+          Regenerate with same material
+        </button>
+      </div>
     </div>
   );
 }
+

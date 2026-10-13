@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDocumentText } from "@/lib/document-parser";
 import { generateQuizGroq, isGroqConfigured } from "@/lib/groq";
-import { generateQuiz, isGeminiConfigured } from "@/lib/gemini";
+import { generateQuiz, isGeminiConfigured, parseDocument } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { documentId, topic, count } = await req.json();
+    const { documentId, topic, count, mode = "replace" } = await req.json();
 
     if (!documentId && !topic) {
       return NextResponse.json(
@@ -36,9 +36,6 @@ export async function POST(req: Request) {
 
       try {
         sourceMaterial = await getDocumentText(doc.fileUrl, doc.filename);
-        if (!topic && doc.topics.length > 0) {
-          finalTopic = doc.topics[0];
-        }
       } catch (err: any) {
         console.error("Quiz source material extraction failed:", err);
         if (err.message === "GEMINI_TEMPORARILY_UNAVAILABLE") {
@@ -83,52 +80,56 @@ export async function POST(req: Request) {
         }
         throw err;
       }
+
+      const analysis = await parseDocument(sourceMaterial, session.user.locale).catch(() => ({ topics: [], summary: "" }));
+      const detectedTopics = Array.from(new Set([...(doc.topics ?? []), ...(analysis.topics ?? [])].filter(Boolean)));
+      finalTopic = topic || detectedTopics[0] || doc.topics[0] || "General Study";
     }
 
-    let quizItems: any[] = [];
     const requestedCount = count || 5;
     const material = sourceMaterial || `General knowledge about ${finalTopic}`;
+    const analysis = sourceMaterial
+      ? await parseDocument(sourceMaterial, session.user.locale).catch(() => ({ topics: [], summary: "" }))
+      : { topics: [finalTopic], summary: "" };
 
-    // Attempt Groq first if configured
+    let quizItems: any[] = [];
     if (isGroqConfigured()) {
       try {
-        quizItems = await generateQuizGroq(
-          finalTopic,
-          material,
-          requestedCount,
-          session.user.locale
-        );
+        quizItems = await generateQuizGroq(finalTopic, material, requestedCount, session.user.locale);
       } catch (groqError) {
         console.error("Groq quiz generation failed, trying Gemini fallback:", groqError);
       }
     }
 
-    // Fallback to Gemini if Groq failed or wasn't configured
     if (quizItems.length === 0 && isGeminiConfigured()) {
       try {
-        quizItems = await generateQuiz(
-          finalTopic,
-          material,
-          requestedCount,
-          session.user.locale
-        );
+        quizItems = await generateQuiz(finalTopic, material, requestedCount, session.user.locale);
       } catch (geminiError) {
         console.error("Gemini quiz generation failed:", geminiError);
       }
     }
 
     if (!quizItems || quizItems.length === 0) {
-      const errorMsg = !isGroqConfigured() && !isGeminiConfigured() 
+      const errorMsg = !isGroqConfigured() && !isGeminiConfigured()
         ? "AI service is not configured. Please contact support."
         : "Failed to generate quiz questions. AI services might be temporarily overloaded.";
-      
+
       return NextResponse.json(
         { error: errorMsg },
         { status: 503 }
       );
     }
 
-    // Store the generated quiz questions in Prisma for later review/analytics
+    if (mode === "replace") {
+      await prisma.quizQuestion.deleteMany({
+        where: {
+          userId: session.user.id,
+          ...(documentId ? { documentId } : {}),
+          topic: finalTopic,
+        },
+      });
+    }
+
     await prisma.quizQuestion.createMany({
       data: quizItems.map((q: any) => ({
         userId: session.user.id,
@@ -141,7 +142,14 @@ export async function POST(req: Request) {
       })),
     });
 
-    return NextResponse.json({ quiz: quizItems });
+    return NextResponse.json({
+      quiz: quizItems,
+      analysis: {
+        topics: Array.from(new Set([...(analysis.topics ?? []), finalTopic].filter(Boolean))),
+        summary: analysis.summary,
+        usedTopic: finalTopic,
+      },
+    });
   } catch (error: any) {
     console.error("Quiz generation route error:", error);
     if (error.code === "P2025") {
@@ -153,3 +161,4 @@ export async function POST(req: Request) {
     );
   }
 }
+
