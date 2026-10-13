@@ -4,7 +4,11 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDocumentText } from "@/lib/document-parser";
 import { generateQuizGroq, isGroqConfigured } from "@/lib/groq";
-import { generateQuiz, isGeminiConfigured } from "@/lib/gemini";
+import { generateQuiz, isGeminiConfigured, parseDocument } from "@/lib/gemini";
+
+function normalizeMode(mode?: string): "replace" | "append" {
+  return mode === "append" ? "append" : "replace";
+}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -13,7 +17,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { documentId, topic, count } = await req.json();
+    const { documentId, topic, count, mode, reRunAnalysis } = await req.json();
 
     if (!documentId && !topic) {
       return NextResponse.json(
@@ -22,22 +26,36 @@ export async function POST(req: Request) {
       );
     }
 
+    const resolvedMode = normalizeMode(mode);
     let sourceMaterial = "";
     let finalTopic = topic || "General Study";
 
-    if (documentId) {
-      const doc = await prisma.document.findUnique({
-        where: { id: documentId, userId: session.user.id },
-      });
+    const doc = documentId
+      ? await prisma.document.findUnique({
+          where: { id: documentId, userId: session.user.id },
+        })
+      : null;
 
-      if (!doc) {
-        return NextResponse.json({ error: "Document not found" }, { status: 404 });
-      }
+    if (documentId && !doc) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
 
+    if (doc) {
       try {
         sourceMaterial = await getDocumentText(doc.fileUrl, doc.filename);
         if (!topic && doc.topics.length > 0) {
           finalTopic = doc.topics[0];
+        }
+        if (reRunAnalysis !== false) {
+          const analysis = await parseDocument(sourceMaterial, session.user.locale);
+          await prisma.document.update({
+            where: { id: doc.id },
+            data: {
+              topics: analysis.topics,
+              parsedAt: new Date(),
+            },
+          });
+          doc.topics = analysis.topics;
         }
       } catch (err: any) {
         console.error("Quiz source material extraction failed:", err);
@@ -89,7 +107,6 @@ export async function POST(req: Request) {
     const requestedCount = count || 5;
     const material = sourceMaterial || `General knowledge about ${finalTopic}`;
 
-    // Attempt Groq first if configured
     if (isGroqConfigured()) {
       try {
         quizItems = await generateQuizGroq(
@@ -103,7 +120,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Fallback to Gemini if Groq failed or wasn't configured
     if (quizItems.length === 0 && isGeminiConfigured()) {
       try {
         quizItems = await generateQuiz(
@@ -118,17 +134,26 @@ export async function POST(req: Request) {
     }
 
     if (!quizItems || quizItems.length === 0) {
-      const errorMsg = !isGroqConfigured() && !isGeminiConfigured() 
+      const errorMsg = !isGroqConfigured() && !isGeminiConfigured()
         ? "AI service is not configured. Please contact support."
         : "Failed to generate quiz questions. AI services might be temporarily overloaded.";
-      
+
       return NextResponse.json(
         { error: errorMsg },
         { status: 503 }
       );
     }
 
-    // Store the generated quiz questions in Prisma for later review/analytics
+    if (resolvedMode === "replace" && documentId) {
+      await prisma.quizQuestion.deleteMany({
+        where: {
+          userId: session.user.id,
+          documentId,
+          topic: finalTopic,
+        },
+      });
+    }
+
     await prisma.quizQuestion.createMany({
       data: quizItems.map((q: any) => ({
         userId: session.user.id,
@@ -141,7 +166,14 @@ export async function POST(req: Request) {
       })),
     });
 
-    return NextResponse.json({ quiz: quizItems });
+    const analysis = {
+      documentId: documentId || undefined,
+      topics: doc?.topics?.length ? doc.topics : [finalTopic],
+      summary: doc ? `Study set analyzed for ${finalTopic}.` : `Generated study content for ${finalTopic}.`,
+      analyzedAt: new Date().toISOString(),
+    };
+
+    return NextResponse.json({ quiz: quizItems, mode: resolvedMode, analysis });
   } catch (error: any) {
     console.error("Quiz generation route error:", error);
     if (error.code === "P2025") {

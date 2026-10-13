@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { generateFlashcards, isGeminiConfigured } from "@/lib/gemini";
-import { generateFlashcardsGroq, isGroqConfigured } from "@/lib/groq";
 import { prisma } from "@/lib/db";
+import { getDocumentText } from "@/lib/document-parser";
+import { generateFlashcards, isGeminiConfigured, parseDocument } from "@/lib/gemini";
+import { generateFlashcardsGroq, isGroqConfigured } from "@/lib/groq";
 import { getTierLimits, getUserTier } from "@/lib/subscription";
 import { isMethodAllowed } from "@/lib/study-methods";
-import { getDocumentText } from "@/lib/document-parser";
+
+function normalizeMode(mode?: string): "replace" | "append" {
+  return mode === "append" ? "append" : "replace";
+}
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -19,20 +23,44 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Flashcards are not available on your plan" }, { status: 403 });
   }
 
-  const { documentId, topic, reset } = (await req.json()) as { 
-    documentId?: string; 
-    topic?: string; 
-    reset?: boolean 
+  const { documentId, topic, reset, mode, reRunAnalysis } = (await req.json()) as {
+    documentId?: string;
+    topic?: string;
+    reset?: boolean;
+    mode?: string;
+    reRunAnalysis?: boolean;
   };
-  const doc = await prisma.document.findFirst({
-    where: { id: documentId, userId: session.user.id },
-  });
-  
-  if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
 
-  const resolvedTopic = topic || doc.topics[0] || "General";
+  const doc = documentId
+    ? await prisma.document.findFirst({
+        where: { id: documentId, userId: session.user.id },
+      })
+    : null;
 
-  if (reset) {
+  if (!doc && documentId) return NextResponse.json({ error: "Document not found" }, { status: 404 });
+
+  const resolvedMode = normalizeMode(mode);
+  const shouldReplace = reset === true || resolvedMode === "replace";
+  const resolvedTopic = topic || doc?.topics[0] || "General";
+
+  if (doc && reRunAnalysis !== false) {
+    try {
+      const documentContext = await getDocumentText(doc.fileUrl, doc.filename);
+      const analysis = await parseDocument(documentContext, session.user.locale);
+      await prisma.document.update({
+        where: { id: doc.id },
+        data: {
+          topics: analysis.topics,
+          parsedAt: new Date(),
+        },
+      });
+      doc.topics = analysis.topics;
+    } catch (error: any) {
+      console.error("Study analysis refresh failed before flashcard generation:", error);
+    }
+  }
+
+  if (doc && shouldReplace) {
     await prisma.flashcard.deleteMany({
       where: {
         userId: session.user.id,
@@ -44,9 +72,8 @@ export async function POST(req: Request) {
 
   const count = getTierLimits(tier).flashcardsPerBatch;
 
-  // Fetch document content using robust parser
-  let documentContext = doc.filename;
-  if (doc.fileUrl) {
+  let documentContext = doc?.filename || "";
+  if (doc?.fileUrl) {
     try {
       documentContext = await getDocumentText(doc.fileUrl, doc.filename);
     } catch (error: any) {
@@ -60,7 +87,6 @@ export async function POST(req: Request) {
     }
   }
 
-  // Guardrail: Ensure text exists and is long enough
   if (!documentContext || documentContext.trim().length < 50) {
     return NextResponse.json(
       { error: "Document content is missing or unreadable. Please upload a higher quality document." },
@@ -83,7 +109,6 @@ export async function POST(req: Request) {
       } catch (groqError: any) {
         console.error("Groq flashcard generation failed:", groqError.message);
         generationError = groqError;
-        // Fallback to Gemini
       }
     }
 
@@ -104,16 +129,16 @@ export async function POST(req: Request) {
     if (!cards) {
       const isGeminiUnavailable = generationError?.code === "GEMINI_UNAVAILABLE" || generationError?.message?.includes("high demand");
       const isGroqJsonError = generationError?.message?.includes("JSON");
-      
+
       if (isGeminiUnavailable) {
         return NextResponse.json(
           { error: "AI service is temporarily overloaded. Please try again in a moment." },
           { status: 503 }
         );
       }
-      
+
       if (isGroqJsonError) {
-         return NextResponse.json(
+        return NextResponse.json(
           { error: "AI failed to generate valid flashcards. Please try a different topic or document." },
           { status: 500 }
         );
@@ -130,7 +155,7 @@ export async function POST(req: Request) {
         .filter((c: { question: string; answer: string }) => {
           const q = c.question.toLowerCase();
           const FORBIDDEN_WORDS = [
-            "paper", "section", "question 1", "question 2", "short answer", 
+            "paper", "section", "question 1", "question 2", "short answer",
             "marks", "structure", "cover page", "instructions", "first question"
           ];
           return !FORBIDDEN_WORDS.some((word) => q.includes(word));
@@ -139,7 +164,7 @@ export async function POST(req: Request) {
           prisma.flashcard.create({
             data: {
               userId: session.user.id,
-              documentId: doc.id,
+              documentId: doc?.id ?? null,
               topic: resolvedTopic,
               question: c.question,
               answer: c.answer,
@@ -148,7 +173,14 @@ export async function POST(req: Request) {
         )
     );
 
-    return NextResponse.json({ flashcards: created });
+    const analysis = {
+      documentId: doc?.id,
+      topics: doc?.topics?.length ? doc.topics : [resolvedTopic],
+      summary: doc ? `Study set analyzed for ${resolvedTopic}.` : `Generated study content for ${resolvedTopic}.`,
+      analyzedAt: new Date().toISOString(),
+    };
+
+    return NextResponse.json({ flashcards: created, mode: resolvedMode, analysis });
   } catch (error: any) {
     console.error("Flashcard generation final catch:", error);
     if (error.code === "P2025") {

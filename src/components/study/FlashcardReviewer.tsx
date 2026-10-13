@@ -5,7 +5,7 @@ import Link from "next/link";
 import { RotateCcw, RefreshCw } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { DocumentSummary, FlashcardItem } from "@/types";
+import { DocumentSummary, FlashcardItem, GenerationMode } from "@/types";
 
 const CONFIDENCE = ["low", "medium", "high"] as const;
 
@@ -18,13 +18,15 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("replace");
+  const [analysisSummary, setAnalysisSummary] = useState("");
+  const [analysisTopics, setAnalysisTopics] = useState<string[]>([]);
 
   async function loadCards() {
     setLoading(true);
     const [cardsRes, docsRes] = await Promise.all([fetch("/api/flashcards"), fetch("/api/documents")]);
     if (cardsRes.ok) {
       const all = (await cardsRes.json()) as FlashcardItem[];
-      // Spaced repetition surfaces cards due for review first.
       setCards(
         spaced
           ? [...all].sort((a, b) => {
@@ -44,12 +46,12 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaced]);
 
-  async function generate(documentId: string, topic?: string, reset = false) {
+  async function generate(documentId: string, topic?: string, reset = false, modeOverride?: GenerationMode) {
     setGenerating(true);
     setError("");
-    
-    // UI Reset immediately if resetting
-    if (reset) {
+
+    const nextMode = modeOverride ?? generationMode;
+    if (reset || nextMode === "replace") {
       setIndex(0);
       setRevealed(false);
     }
@@ -58,7 +60,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       const res = await fetch("/api/gemini/generate-flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, topic, reset }),
+        body: JSON.stringify({ documentId, topic, reset: reset || nextMode === "replace", mode: nextMode, reRunAnalysis: true }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -69,7 +71,12 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
         }
         return;
       }
-      
+
+      if (data.analysis) {
+        setAnalysisSummary(data.analysis.summary || "");
+        setAnalysisTopics(Array.isArray(data.analysis.topics) ? data.analysis.topics : []);
+      }
+
       if (data.flashcards) {
         setCards(data.flashcards);
         setIndex(0);
@@ -119,28 +126,37 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
       <div className="card">
         <div className="flex items-center justify-between">
           <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.upload.noUploads}</p>
-          <button 
-            onClick={() => void refreshDocuments()} 
+          <button
+            onClick={() => void refreshDocuments()}
             disabled={loading}
             className="flex items-center text-xs font-medium text-primary-600 hover:text-primary-700"
           >
-            <RefreshCw size={14} className={`mr-1 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={14} className={`mr-1 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
         </div>
         {documents.length > 0 ? (
           <div className="mt-4 space-y-2">
             {documents.slice(0, 5).map((doc) => (
-              <button
-                key={doc.id}
-                type="button"
-                disabled={generating}
-                onClick={() => void generate(doc.id, doc.topics[0])}
-                className="btn-secondary w-full justify-between"
-              >
-                <span className="truncate">{doc.filename}</span>
-                <span>{generating ? t.common.loading : t.study.generate}</span>
-              </button>
+              <div key={doc.id} className="space-y-2">
+                <button
+                  type="button"
+                  disabled={generating}
+                  onClick={() => void generate(doc.id, doc.topics[0], true, "replace")}
+                  className="btn-secondary w-full justify-between"
+                >
+                  <span className="truncate">{doc.filename}</span>
+                  <span>{generating ? t.common.loading : "Replace"}</span>
+                </button>
+                <div className="flex gap-2">
+                  <button type="button" className="btn-secondary flex-1" onClick={() => void generate(doc.id, doc.topics[0], false, "append")}>
+                    Append
+                  </button>
+                  <button type="button" className="btn-secondary flex-1" onClick={() => void generate(doc.id, doc.topics[0], true, generationMode)}>
+                    Regenerate
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -158,6 +174,8 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
   }
 
   const card = cards[index];
+  const activeDocId = card?.documentId ?? documents[0]?.id ?? "";
+  const activeTopic = card?.topic ?? documents[0]?.topics[0] ?? "";
 
   return (
     <div className="card">
@@ -167,6 +185,20 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
         </span>
         <span className="chip">{card.topic}</span>
       </div>
+
+      {(analysisSummary || analysisTopics.length > 0) && (
+        <div className="mt-4 rounded-xl border border-primary-100 bg-primary-50 p-3 dark:border-primary-900/40 dark:bg-primary-950/20">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-400">Detected material</p>
+          {analysisSummary && <p className="mt-2 text-sm text-brand-text-primary dark:text-slate-200">{analysisSummary}</p>}
+          {analysisTopics.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {analysisTopics.slice(0, 6).map((topic) => (
+                <span key={topic} className="badge-primary">{topic}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         type="button"
@@ -191,12 +223,35 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
           type="button"
           disabled={generating}
           onClick={() => {
-            const currentCard = cards[index];
-            if (currentCard?.documentId) {
-              void generate(currentCard.documentId, currentCard.topic, true);
+            if (activeDocId) {
+              void generate(activeDocId, activeTopic, true, "replace");
             } else {
               setRevealed(false);
               setIndex(0);
+            }
+          }}
+          className="btn-secondary"
+        >
+          Replace
+        </button>
+        <button
+          type="button"
+          disabled={generating}
+          onClick={() => {
+            if (activeDocId) {
+              void generate(activeDocId, activeTopic, false, "append");
+            }
+          }}
+          className="btn-secondary"
+        >
+          Append
+        </button>
+        <button
+          type="button"
+          disabled={generating}
+          onClick={() => {
+            if (activeDocId) {
+              void generate(activeDocId, activeTopic, true, generationMode);
             }
           }}
           className="btn-ghost ml-auto"
@@ -206,7 +261,7 @@ export function FlashcardReviewer({ spaced = false }: { spaced?: boolean }) {
           ) : (
             <RotateCcw className="mr-1 h-4 w-4" aria-hidden />
           )}
-          {generating ? t.common.loading : t.common.retry}
+          {generating ? t.common.loading : "Regenerate"}
         </button>
       </div>
     </div>

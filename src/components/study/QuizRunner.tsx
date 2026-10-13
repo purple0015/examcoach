@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Brain, CheckCircle2, XCircle, ChevronRight, RefreshCw, BookOpen, Star } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { DocumentSummary, QuizQuestion } from "@/types";
+import { DocumentSummary, GenerationMode, QuizQuestion } from "@/types";
 
 export function QuizRunner() {
   const { t } = useI18n();
@@ -13,7 +13,10 @@ export function QuizRunner() {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [selectedDocId, setSelectedDocId] = useState<string>("");
   const [selectedTopic, setSelectedTopic] = useState<string>("");
-  
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("replace");
+  const [analysisSummary, setAnalysisSummary] = useState("");
+  const [analysisTopics, setAnalysisTopics] = useState<string[]>([]);
+
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
@@ -36,7 +39,7 @@ export function QuizRunner() {
       const res = await fetch("/api/gemini/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: selectedDocId, topic: selectedTopic }),
+        body: JSON.stringify({ documentId: selectedDocId, topic: selectedTopic, mode: generationMode, reRunAnalysis: true }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -45,8 +48,12 @@ export function QuizRunner() {
         }
         throw new Error(data.error || "Generation failed");
       }
-      
+
       setQuestions(data.quiz);
+      if (data.analysis) {
+        setAnalysisSummary(data.analysis.summary || "");
+        setAnalysisTopics(Array.isArray(data.analysis.topics) ? data.analysis.topics : []);
+      }
       setStage("active");
       setCurrentIdx(0);
       setUserAnswers({});
@@ -65,9 +72,8 @@ export function QuizRunner() {
     setScore(finalScoreCount);
     setStage("result");
 
-    // Auto-log session
     const duration = Math.ceil((Date.now() - startTime) / 60000);
-    const doc = documents.find(d => d.id === selectedDocId);
+    const doc = documents.find((d) => d.id === selectedDocId);
     try {
       const res = await fetch("/api/study-sessions", {
         method: "POST",
@@ -114,7 +120,7 @@ export function QuizRunner() {
               value={selectedDocId}
               onChange={(e) => {
                 setSelectedDocId(e.target.value);
-                const doc = documents.find(d => d.id === e.target.value);
+                const doc = documents.find((d) => d.id === e.target.value);
                 if (doc && doc.topics.length > 0) setSelectedTopic(doc.topics[0]);
               }}
             >
@@ -144,6 +150,36 @@ export function QuizRunner() {
               onChange={(e) => setSelectedTopic(e.target.value)}
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Generation action</label>
+            <div className="flex flex-wrap gap-2">
+              {(["replace", "append"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setGenerationMode(mode)}
+                  className={`btn-secondary ${generationMode === mode ? "ring-2 ring-primary-400" : ""}`}
+                >
+                  {mode === "replace" ? "Replace" : "Append"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {(analysisSummary || analysisTopics.length > 0) && (
+            <div className="rounded-xl border border-primary-100 bg-primary-50 p-3 text-left dark:border-primary-900/40 dark:bg-primary-950/20">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-400">Detected material</p>
+              {analysisSummary && <p className="mt-2 text-sm text-brand-text-primary dark:text-slate-200">{analysisSummary}</p>}
+              {analysisTopics.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {analysisTopics.slice(0, 6).map((topic) => (
+                    <span key={topic} className="badge-primary">{topic}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg dark:bg-red-950/30 dark:text-red-400 border border-red-200 dark:border-red-900/50">
@@ -187,7 +223,7 @@ export function QuizRunner() {
             Question <span className="text-slate-900 dark:text-white font-bold">{currentIdx + 1}</span> of {questions.length}
           </div>
           <div className="h-2 w-32 bg-slate-100 rounded-full overflow-hidden dark:bg-slate-800">
-            <div 
+            <div
               className="h-full bg-primary-600 transition-all duration-300"
               style={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
             />
@@ -196,12 +232,12 @@ export function QuizRunner() {
 
         <div className="card animate-in fade-in slide-in-from-right-4 duration-300">
           <h2 className="text-lg font-bold sm:text-xl leading-relaxed">{q.question}</h2>
-          
+
           <div className="mt-8 grid gap-3">
             {q.options.map((option, i) => {
               const isSelected = userChoice === option;
               const isCorrect = option === q.correctAnswer;
-              
+
               let variantClasses = "border-slate-200 hover:border-primary-400 hover:bg-primary-50/50 dark:border-slate-800 dark:hover:bg-primary-950/30";
               if (isAnswered) {
                 if (isCorrect) variantClasses = "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-400 ring-2 ring-emerald-500/20";
@@ -286,13 +322,13 @@ export function QuizRunner() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <button 
+          <button
             onClick={() => setStage("setup")}
             className="btn-primary w-full py-4 text-base font-bold flex items-center justify-center gap-2"
           >
             <RefreshCw className="h-5 w-5" /> Retake Quiz
           </button>
-          <Link 
+          <Link
             href="/study"
             className="btn-secondary w-full py-4 text-base font-bold"
           >
