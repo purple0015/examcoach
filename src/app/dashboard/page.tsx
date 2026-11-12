@@ -66,7 +66,7 @@ export default function DashboardPage() {
       <AppShell>
         <div className="card text-center">
           <p>{error || t.common.error}</p>
-          <button type="button" onClick={() => void load()} className="btn-primary mt-4">
+          <button type="button" onClick={() => void load()} className="btn-primary mt-4 rounded-full">
             {t.common.retry}
           </button>
         </div>
@@ -76,65 +76,66 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold sm:text-3xl">
-          {t.dashboard.greeting}, {session?.user?.name ?? ""}
-        </h1>
-        <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.common.tagline}</p>
-      </header>
+      <div className="mx-auto w-full max-w-[1040px] space-y-7">
+        <header className="mb-2 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="rail-pill">Today</span>
+            <span className="rail-pill">Focus</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-3xl font-bold sm:text-[2.5rem]">
+              {t.dashboard.greeting}, {session?.user?.name ?? ""}
+            </h1>
+            <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.common.tagline}</p>
+          </div>
+        </header>
 
-      <PaynowStatusChecker />
+        <PaynowStatusChecker />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <StreakCard
-          streak={stats.streak}
-          longestStreak={stats.longestStreak}
-          studiedToday={stats.studiedToday}
-          activity={stats.last14Days}
-        />
-        <div className="lg:col-span-2">
-          <GoalProgress
-            minutesToday={stats.minutesToday}
-            dailyGoal={stats.dailyGoal}
-            dailyGoalPct={stats.dailyGoalPct}
-            topicsThisWeek={stats.topicsThisWeek}
-            weeklyGoal={stats.weeklyGoal}
-            weeklyGoalPct={stats.weeklyGoalPct}
-            onGoalsUpdated={() => void load()}
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_1.8fr]">
+          <StreakCard
+            streak={stats.streak}
+            longestStreak={stats.longestStreak}
+            studiedToday={stats.studiedToday}
+            activity={stats.last14Days}
+          />
+          <div className="lg:pt-1">
+            <GoalProgress
+              minutesToday={stats.minutesToday}
+              dailyGoal={stats.dailyGoal}
+              dailyGoalPct={stats.dailyGoalPct}
+              topicsThisWeek={stats.topicsThisWeek}
+              weeklyGoal={stats.weeklyGoal}
+              weeklyGoalPct={stats.weeklyGoalPct}
+              onGoalsUpdated={() => void load()}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <StatCard icon={Star} label={t.dashboard.totalXP} value={stats.xp} tone="primary" />
+          <StatCard icon={FileText} label={t.dashboard.documents} value={stats.docCount} />
+          <StatCard icon={BookOpen} label={t.dashboard.flashcards} value={stats.flashcardCount} />
+          <StatCard icon={GraduationCap} label={t.dashboard.mockExams} value={stats.mockExamCount} />
+          <StatCard
+            icon={Target}
+            label={t.dashboard.averageScore}
+            value={`${stats.averageScore}%`}
+            tone={stats.averageScore >= 70 ? "success" : "warning"}
           />
         </div>
-      </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard icon={Star} label={t.dashboard.totalXP} value={stats.xp} tone="primary" />
-        <StatCard icon={FileText} label={t.dashboard.documents} value={stats.docCount} />
-        <StatCard icon={BookOpen} label={t.dashboard.flashcards} value={stats.flashcardCount} />
-        <StatCard icon={GraduationCap} label={t.dashboard.mockExams} value={stats.mockExamCount} />
-        <StatCard
-          icon={Target}
-          label={t.dashboard.averageScore}
-          value={`${stats.averageScore}%`}
-          tone={stats.averageScore >= 70 ? "success" : "warning"}
-        />
-      </div>
-
-      <div className="mt-4">
-        <PlanPanel subscription={subscription} stats={stats} />
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="grid gap-5 lg:grid-cols-[1.7fr_1fr]">
           <QuickActions tier={subscription.tier} />
+          <UploadQuotaCard quota={quota} />
         </div>
-        <UploadQuotaCard quota={quota} />
-      </div>
 
-      <div className="mt-4">
-        <TopicTrendWidget />
-      </div>
+        <PlanPanel subscription={subscription} stats={stats} />
 
-      <div className="mt-4">
-        <WeaknessHeatmap cells={stats.weaknessMatrix} />
+        <div className="space-y-5">
+          <TopicTrendWidget />
+          <WeaknessHeatmap cells={stats.weaknessMatrix} />
+        </div>
       </div>
     </AppShell>
   );

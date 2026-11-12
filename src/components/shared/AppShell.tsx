@@ -11,14 +11,11 @@ export function AppShell({
   width?: "wide" | "narrow";
 }) {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
-      {/* Decorative background sunburst circle */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[1000px] w-[1000px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-surface-border bg-surface-light/50 shadow-[0_0_100px_rgba(241,245,249,0.5)] dark:border-slate-800 dark:bg-slate-950/50" />
-      
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-surface-canvas">
       <NavBar />
       <main
-        className={`relative z-10 mx-auto w-full flex-1 px-4 py-8 ${
-          width === "narrow" ? "max-w-2xl" : "max-w-6xl"
+        className={`mx-auto w-full flex-1 px-4 py-7 sm:px-6 sm:py-9 ${
+          width === "narrow" ? "max-w-[760px]" : "max-w-6xl"
         }`}
       >
         {children}

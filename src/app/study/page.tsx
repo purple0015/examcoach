@@ -44,59 +44,78 @@ export default function StudyMethodsPage() {
 
   return (
     <AppShell>
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold sm:text-3xl">{t.study.title}</h1>
-        <p className="text-sm text-brand-text-secondary dark:text-slate-400">{t.study.subtitle}</p>
-      </header>
-
-      <div className="mb-6">
-        <ZimsecSubjectSelector />
-      </div>
-
-      <h2 className="section-title">{t.study.available}</h2>
-      <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {available.map((method) => {
-          const Icon = (Icons[method.icon as keyof typeof Icons] ?? Icons.BookOpen) as Icons.LucideIcon;
-          return (
-            <Link key={method.id} href={method.href} className="card transition-shadow hover:shadow-md">
-              <Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" aria-hidden />
-              <h3 className="mt-3 font-semibold">{t.study.methods[method.id].name}</h3>
-              <p className="mt-1 text-sm text-brand-text-secondary dark:text-slate-400">
-                {t.study.methods[method.id].description}
-              </p>
-              <p className="mt-3 text-xs text-brand-text-secondary dark:text-slate-400">
-                {t.study.duration}: {method.minutes} {t.common.minutes} · {t.study.intensity}:{" "}
-                {t.study[method.intensity]}
-              </p>
-            </Link>
-          );
-        })}
-      </div>
-
-      {locked.length > 0 && (
-        <>
-          <h2 className="section-title mt-10">{t.study.lockedTitle}</h2>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {locked.map((method) => (
-              <div key={method.id} className="card-muted">
-                <div className="flex items-center gap-2 text-brand-text-secondary">
-                  <Lock className="h-4 w-4" aria-hidden />
-                  <span className="text-xs uppercase tracking-wide">{t.common.locked}</span>
-                </div>
-                <h3 className="mt-3 font-semibold">{t.study.methods[method.id].name}</h3>
-                <p className="mt-1 text-sm text-brand-text-secondary dark:text-slate-400">
-                  {t.study.methods[method.id].description}
-                </p>
-                <Link href="/pricing" className="btn-secondary mt-4 w-full justify-center">
-                  {format(t.study.unlockWith, {
-                    plan: getPlanByTier(lowestTierWithMethod(method.id)).name,
-                  })}
-                </Link>
-              </div>
-            ))}
+      <div className="study-shell space-y-6">
+        <header className="mb-3">
+          <div className="flex items-center gap-2">
+            <span className="rail-pill">Practice</span>
+            <span className="rail-pill">Study methods</span>
           </div>
-        </>
-      )}
+          <h1 className="mt-3 text-3xl font-bold sm:text-[2.5rem]">{t.study.title}</h1>
+          <p className="mt-2 text-sm text-brand-text-secondary dark:text-slate-400">{t.study.subtitle}</p>
+        </header>
+
+        <div className="soft-panel">
+          <ZimsecSubjectSelector />
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="section-title">{t.study.available}</h2>
+          <div className="mt-1 grid gap-4 sm:grid-cols-2">
+            {available.map((method) => {
+              const Icon = (Icons[method.icon as keyof typeof Icons] ?? Icons.BookOpen) as Icons.LucideIcon;
+              return (
+                <Link
+                  key={method.id}
+                  href={method.href}
+                  className="card group transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-500/40"
+                >
+                  <div className="flex items-center justify-between">
+                    <Icon className="h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
+                    <span className="chip">{method.minutes} min</span>
+                  </div>
+                  <h3 className="mt-4 text-xl font-semibold">{t.study.methods[method.id].name}</h3>
+                  <p className="mt-2 text-sm text-brand-text-secondary">
+                    {t.study.methods[method.id].description}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between border-t border-surface-border pt-3 text-xs text-brand-text-secondary">
+                    <span>
+                      {t.study.duration}: {method.minutes} {t.common.minutes}
+                    </span>
+                    <span>
+                      {t.study.intensity}: {t.study[method.intensity]}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {locked.length > 0 && (
+          <>
+            <h2 className="section-title mt-2">{t.study.lockedTitle}</h2>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              {locked.map((method) => (
+                <div key={method.id} className="card-muted">
+                  <div className="flex items-center gap-2 text-brand-text-secondary">
+                    <Lock className="h-4 w-4" aria-hidden />
+                    <span className="text-xs uppercase tracking-wide">{t.common.locked}</span>
+                  </div>
+                  <h3 className="mt-3 font-semibold">{t.study.methods[method.id].name}</h3>
+                  <p className="mt-1 text-sm text-brand-text-secondary dark:text-slate-400">
+                    {t.study.methods[method.id].description}
+                  </p>
+                  <Link href="/pricing" className="btn-secondary mt-4 w-full justify-center rounded-full">
+                    {format(t.study.unlockWith, {
+                      plan: getPlanByTier(lowestTierWithMethod(method.id)).name,
+                    })}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </AppShell>
   );
 }
