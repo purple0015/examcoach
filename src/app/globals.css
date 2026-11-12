@@ -11,18 +11,28 @@
     color-scheme: dark;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-surface-canvas text-brand-text-primary antialiased transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100;
+    background-image: radial-gradient(circle at top, rgba(242, 140, 56, 0.08), transparent 28%), linear-gradient(to bottom, #faf9f6, #faf9f6);
   }
 
   html.dark body {
-    background-image: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+    background-image: radial-gradient(circle at top, rgba(242, 140, 56, 0.12), transparent 28%), linear-gradient(to bottom, #020617, #020617);
   }
 
   h1,
   h2,
   h3 {
-    @apply tracking-tight;
+    @apply tracking-[-0.02em] text-brand-text-primary;
+  }
+
+  p,
+  li {
+    @apply leading-relaxed;
   }
 
   :focus-visible {
@@ -32,23 +42,23 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-surface-border bg-surface-light p-6 shadow-card transition-all hover:border-primary-500/40 dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-[18px] border border-surface-border bg-surface-light p-5 shadow-[0_1px_0_rgba(15,23,42,0.02),0_18px_28px_-18px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-500/40 dark:border-slate-800 dark:bg-slate-900;
   }
 
   .card-muted {
-    @apply rounded-2xl border border-surface-border bg-surface-canvas p-6 dark:border-slate-800 dark:bg-slate-900/60;
+    @apply rounded-[18px] border border-surface-border bg-surface-canvas p-5 dark:border-slate-800 dark:bg-slate-900/70;
   }
 
   .input-field {
-    @apply w-full rounded-xl border border-surface-border bg-surface-light px-4 py-2.5 text-brand-text-primary outline-none transition-all placeholder:text-brand-text-secondary/60 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500;
+    @apply w-full rounded-[14px] border border-surface-border bg-surface-light px-3.5 py-2.75 text-brand-text-primary outline-none transition-all placeholder:text-brand-text-secondary/60 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98];
   }
 
   .btn-primary {
-    @apply btn bg-primary-500 text-white hover:bg-primary-600;
+    @apply btn bg-primary-500 text-white shadow-[0_10px_24px_-16px_rgba(242,140,56,0.9)] hover:bg-primary-600;
   }
 
   .btn-secondary {
@@ -60,25 +70,24 @@
   }
 
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-400;
+    @apply inline-flex items-center gap-1 rounded-full border border-primary-500/20 bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-700 dark:border-primary-500/30 dark:bg-primary-900/30 dark:text-primary-300;
   }
 
   .section-title {
-    @apply text-sm font-semibold uppercase tracking-wide text-brand-text-secondary;
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-text-secondary;
   }
-}
 
-.perspective {
-  perspective: 1000px;
-}
-.backface-hidden {
-  backface-visibility: hidden;
-}
-.rotate-y-180 {
-  transform: rotateY(180deg);
-}
-.preserve-3d {
-  transform-style: preserve-3d;
+  .study-shell {
+    @apply mx-auto w-full max-w-[760px];
+  }
+
+  .soft-panel {
+    @apply rounded-[18px] border border-surface-border bg-white/80 p-5 shadow-[0_1px_0_rgba(15,23,42,0.02),0_18px_28px_-18px_rgba(15,23,42,0.18)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80;
+  }
+
+  .rail-pill {
+    @apply rounded-full border border-surface-border bg-surface-canvas px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-brand-text-secondary dark:border-slate-700 dark:bg-slate-800;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -90,7 +99,7 @@
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 4px;
+  border-radius: 999px;
 }
 .dark ::-webkit-scrollbar-thumb {
   background: #334155;

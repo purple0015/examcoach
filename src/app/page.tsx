@@ -17,47 +17,52 @@ export default function LandingPage() {
 
   return (
     <AppShell>
-      <section className="rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-950 px-6 py-16 text-center text-white sm:px-12">
-        <span className="chip bg-white/15 text-white">{t.common.tagline}</span>
-        <h1 className="mt-5 text-3xl font-bold sm:text-5xl">{t.landing.heroTitle}</h1>
-        <p className="mx-auto mt-4 max-w-2xl text-base text-white/80 sm:text-lg">
-          {t.landing.heroSubtitle}
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/signup" className="btn bg-white text-primary-700 hover:bg-slate-100">
-            {t.landing.ctaPrimary}
-          </Link>
-          <Link href="/pricing" className="btn border border-white/40 text-white hover:bg-white/10">
-            {t.landing.ctaSecondary}
-          </Link>
-        </div>
-        <p className="mt-4 text-sm text-white/70">{t.landing.trialNote}</p>
-      </section>
+      <div className="study-shell space-y-8">
+        <section className="rounded-[28px] border border-primary-500/20 bg-primary-500/5 px-6 py-8 sm:px-8 sm:py-10">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="rail-pill">{t.common.tagline}</span>
+          </div>
+          <h1 className="max-w-xl text-3xl font-bold sm:text-5xl">{t.landing.heroTitle}</h1>
+          <p className="mt-4 max-w-2xl text-base text-brand-text-secondary sm:text-lg">
+            {t.landing.heroSubtitle}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-start gap-3">
+            <Link href="/signup" className="btn-primary rounded-full">
+              {t.landing.ctaPrimary}
+            </Link>
+            <Link href="/pricing" className="btn-secondary rounded-full">
+              {t.landing.ctaSecondary}
+            </Link>
+          </div>
+          <p className="mt-4 text-sm text-brand-text-secondary">{t.landing.trialNote}</p>
+        </section>
 
-      <section className="mt-12">
-        <h2 className="section-title text-center">{t.landing.featuresTitle}</h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {features.map((feature) => (
-            <article key={feature.title} className="card">
-              <feature.icon className="h-6 w-6 text-primary-600 dark:text-primary-400" aria-hidden />
-              <h3 className="mt-3 font-semibold">{feature.title}</h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{feature.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+        <section className="space-y-4">
+          <h2 className="section-title">{t.landing.featuresTitle}</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {features.map((feature) => (
+              <article key={feature.title} className="card group hover:-translate-y-0.5">
+                <div className="flex items-center justify-between">
+                  <feature.icon className="h-6 w-6 text-primary-600 dark:text-primary-400" aria-hidden />
+                  <span className="chip">Live</span>
+                </div>
+                <h3 className="mt-4 text-xl font-semibold">{feature.title}</h3>
+                <p className="mt-2 text-sm text-brand-text-secondary">{feature.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
 
-      <section className="mt-12 text-center">
-        <h2 className="section-title">{t.landing.readyToStart}</h2>
-        <p className="mt-2 text-slate-500 dark:text-slate-400">
-          {t.landing.joinThousands}
-        </p>
-        <div className="mt-6">
-          <Link href="/signup" className="btn-primary inline-flex">
-            {t.landing.ctaPrimary}
-          </Link>
-        </div>
-      </section>
+        <section className="soft-panel text-center">
+          <h2 className="section-title">{t.landing.readyToStart}</h2>
+          <p className="mt-3 text-sm text-brand-text-secondary">{t.landing.joinThousands}</p>
+          <div className="mt-6">
+            <Link href="/signup" className="btn-primary rounded-full inline-flex">
+              {t.landing.ctaPrimary}
+            </Link>
+          </div>
+        </section>
+      </div>
     </AppShell>
   );
 }
