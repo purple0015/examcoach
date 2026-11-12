@@ -17,11 +17,11 @@
 
   body {
     @apply bg-surface-canvas text-brand-text-primary antialiased transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100;
-    background-image: radial-gradient(circle at top, rgba(242, 140, 56, 0.08), transparent 28%), linear-gradient(to bottom, #faf9f6, #faf9f6);
+    background-image: linear-gradient(to bottom, #faf9f6, #faf9f6);
   }
 
   html.dark body {
-    background-image: radial-gradient(circle at top, rgba(242, 140, 56, 0.12), transparent 28%), linear-gradient(to bottom, #020617, #020617);
+    background-image: linear-gradient(to bottom, #020617, #020617);
   }
 
   h1,
@@ -32,41 +32,49 @@
 
   p,
   li {
-    @apply leading-relaxed;
+    @apply leading-[1.65];
   }
 
   :focus-visible {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
   }
+
+  ::selection {
+    @apply bg-primary-100 text-brand-text-primary dark:bg-primary-900 dark:text-slate-100;
+  }
 }
 
 @layer components {
   .card {
-    @apply rounded-[18px] border border-surface-border bg-surface-light p-5 shadow-[0_1px_0_rgba(15,23,42,0.02),0_18px_28px_-18px_rgba(15,23,42,0.18)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-500/40 dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-[18px] border-[1.5px] border-surface-border bg-surface-light p-5 shadow-[0_2px_0_rgba(15,23,42,0.035),0_10px_24px_-20px_rgba(15,23,42,0.3)] transition-[transform,border-color,box-shadow] duration-200 dark:border-slate-800 dark:bg-slate-900;
+  }
+
+  .card:hover {
+    @apply border-primary-500/35 shadow-[0_3px_0_rgba(15,23,42,0.035),0_16px_28px_-22px_rgba(15,23,42,0.34)];
   }
 
   .card-muted {
-    @apply rounded-[18px] border border-surface-border bg-surface-canvas p-5 dark:border-slate-800 dark:bg-slate-900/70;
+    @apply rounded-[18px] border-[1.5px] border-surface-border bg-surface-canvas p-5 dark:border-slate-800 dark:bg-slate-900/70;
   }
 
   .input-field {
-    @apply w-full rounded-[14px] border border-surface-border bg-surface-light px-3.5 py-2.75 text-brand-text-primary outline-none transition-all placeholder:text-brand-text-secondary/60 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
+    @apply w-full rounded-[14px] border-[1.5px] border-surface-border bg-surface-light px-3.5 py-3 text-brand-text-primary outline-none transition-all placeholder:text-brand-text-secondary/60 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-[14px] border-[1.5px] px-4 py-2.5 text-sm font-semibold transition-[transform,background-color,border-color,box-shadow] duration-150 disabled:cursor-not-allowed disabled:opacity-60 active:translate-y-px active:scale-[0.98];
   }
 
   .btn-primary {
-    @apply btn bg-primary-500 text-white shadow-[0_10px_24px_-16px_rgba(242,140,56,0.9)] hover:bg-primary-600;
+    @apply btn border-primary-500 bg-primary-500 text-white shadow-[0_2px_0_rgba(124,45,18,0.18)] hover:border-primary-600 hover:bg-primary-600;
   }
 
   .btn-secondary {
-    @apply btn border border-surface-border bg-surface-light text-brand-text-primary hover:bg-surface-canvas dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800;
+    @apply btn border-surface-border bg-surface-light text-brand-text-primary hover:border-primary-500/35 hover:bg-surface-canvas dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800;
   }
 
   .btn-ghost {
-    @apply btn text-brand-text-secondary hover:bg-surface-canvas dark:text-slate-300 dark:hover:bg-slate-800;
+    @apply btn border-transparent text-brand-text-secondary hover:bg-surface-canvas dark:text-slate-300 dark:hover:bg-slate-800;
   }
 
   .chip {
@@ -82,11 +90,57 @@
   }
 
   .soft-panel {
-    @apply rounded-[18px] border border-surface-border bg-white/80 p-5 shadow-[0_1px_0_rgba(15,23,42,0.02),0_18px_28px_-18px_rgba(15,23,42,0.18)] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80;
+    @apply rounded-[18px] border-[1.5px] border-surface-border bg-surface-light p-5 shadow-[0_2px_0_rgba(15,23,42,0.035),0_10px_24px_-20px_rgba(15,23,42,0.3)] dark:border-slate-800 dark:bg-slate-900;
   }
 
   .rail-pill {
     @apply rounded-full border border-surface-border bg-surface-canvas px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-brand-text-secondary dark:border-slate-700 dark:bg-slate-800;
+  }
+}
+
+/* Interactive answer and flash cards inherit the same crisp, tactile feel. */
+button.border-2 {
+  border-width: 1.5px;
+  border-radius: 14px;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.035);
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+button.border-2:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 rgba(15, 23, 42, 0.045);
+}
+
+button.border-2:not(:disabled):active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: none;
+}
+
+button[class*="min-h-[180px]"] {
+  border: 1.5px solid theme(colors.surface.border);
+  box-shadow: 0 3px 0 rgba(15, 23, 42, 0.04), 0 14px 24px -22px rgba(15, 23, 42, 0.36);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+button[class*="min-h-[180px]"]:hover {
+  transform: translateY(-2px);
+  border-color: rgba(242, 140, 56, 0.45);
+  box-shadow: 0 5px 0 rgba(15, 23, 42, 0.04), 0 18px 28px -22px rgba(15, 23, 42, 0.36);
+}
+
+.tabular-nums,
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

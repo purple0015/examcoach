@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="study-shell space-y-6">
+      <div className="mx-auto w-full max-w-[1040px] space-y-7">
         <header className="mb-2 flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="rail-pill">Today</span>
@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
         <PaynowStatusChecker />
 
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_1.8fr]">
+        <div className="grid gap-5 lg:grid-cols-[1.2fr_1.8fr]">
           <StreakCard
             streak={stats.streak}
             longestStreak={stats.longestStreak}
@@ -112,7 +112,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-2 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <StatCard icon={Star} label={t.dashboard.totalXP} value={stats.xp} tone="primary" />
           <StatCard icon={FileText} label={t.dashboard.documents} value={stats.docCount} />
           <StatCard icon={BookOpen} label={t.dashboard.flashcards} value={stats.flashcardCount} />
@@ -125,18 +125,15 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="mt-2 grid gap-4 xl:grid-cols-[1.75fr_1fr]">
-          <div className="lg:col-span-2">
-            <QuickActions tier={subscription.tier} />
-          </div>
+        <div className="grid gap-5 lg:grid-cols-[1.7fr_1fr]">
+          <QuickActions tier={subscription.tier} />
           <UploadQuotaCard quota={quota} />
         </div>
 
-        <div className="mt-2">
-          <TopicTrendWidget />
-        </div>
+        <PlanPanel subscription={subscription} stats={stats} />
 
-        <div className="mt-2">
+        <div className="space-y-5">
+          <TopicTrendWidget />
           <WeaknessHeatmap cells={stats.weaknessMatrix} />
         </div>
       </div>
